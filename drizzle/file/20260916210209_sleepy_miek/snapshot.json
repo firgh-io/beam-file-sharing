@@ -1,0 +1,282 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "id": "fa479f36-836e-40fb-b322-8d06fe57ed3a",
+  "prevIds": [
+    "278ffe52-c3c0-4444-9ba8-97222744b912"
+  ],
+  "ddl": [
+    {
+      "name": "file",
+      "entityType": "tables"
+    },
+    {
+      "name": "outbox",
+      "entityType": "tables"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "file_id",
+      "entityType": "columns",
+      "table": "file"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "owner_id",
+      "entityType": "columns",
+      "table": "file"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "file_blob_id",
+      "entityType": "columns",
+      "table": "file"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "file_name",
+      "entityType": "columns",
+      "table": "file"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "file_type",
+      "entityType": "columns",
+      "table": "file"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "file_size",
+      "entityType": "columns",
+      "table": "file"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "file_sha256",
+      "entityType": "columns",
+      "table": "file"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": "'AWAITING_UPLOAD'",
+      "generated": null,
+      "name": "status",
+      "entityType": "columns",
+      "table": "file"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "status_updated_at",
+      "entityType": "columns",
+      "table": "file"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": "'NOT_SCANNED'",
+      "generated": null,
+      "name": "scan_status",
+      "entityType": "columns",
+      "table": "file"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "scan_status_updated_at",
+      "entityType": "columns",
+      "table": "file"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "expired_at",
+      "entityType": "columns",
+      "table": "file"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "download_count",
+      "entityType": "columns",
+      "table": "file"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "max_download_count",
+      "entityType": "columns",
+      "table": "file"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "webhook_url",
+      "entityType": "columns",
+      "table": "file"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "created_at",
+      "entityType": "columns",
+      "table": "file"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": true,
+      "default": null,
+      "generated": null,
+      "name": "id",
+      "entityType": "columns",
+      "table": "outbox"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "op",
+      "entityType": "columns",
+      "table": "outbox"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "file_id",
+      "entityType": "columns",
+      "table": "outbox"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "bytes",
+      "entityType": "columns",
+      "table": "outbox"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "lease_until",
+      "entityType": "columns",
+      "table": "outbox"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": "0",
+      "generated": null,
+      "name": "attempts",
+      "entityType": "columns",
+      "table": "outbox"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "created_at",
+      "entityType": "columns",
+      "table": "outbox"
+    },
+    {
+      "columns": [
+        "file_id"
+      ],
+      "tableTo": "file",
+      "columnsTo": [
+        "file_id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "nameExplicit": false,
+      "name": "fk_outbox_file_id_file_file_id_fk",
+      "entityType": "fks",
+      "table": "outbox"
+    },
+    {
+      "columns": [
+        "file_id"
+      ],
+      "nameExplicit": false,
+      "name": "file_pk",
+      "table": "file",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "outbox_pk",
+      "table": "outbox",
+      "entityType": "pks"
+    }
+  ],
+  "renames": []
+}

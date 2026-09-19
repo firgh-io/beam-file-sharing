@@ -1,0 +1,115 @@
+{
+  "schemaVersion": 1,
+  "algorithm": "louvain",
+  "totalFiles": 10,
+  "totalBatches": 3,
+  "exportsByPath": {
+    "alchemy.run.ts": [],
+    "index.ts": [],
+    "src/bucket.ts": [
+      "Bucket"
+    ],
+    "src/worker.ts": []
+  },
+  "batches": [
+    {
+      "batchIndex": 1,
+      "files": [
+        {
+          "path": "alchemy.run.ts",
+          "language": "typescript",
+          "sizeLines": 23,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/bucket.ts",
+          "language": "typescript",
+          "sizeLines": 3,
+          "fileCategory": "code"
+        },
+        {
+          "path": "src/worker.ts",
+          "language": "typescript",
+          "sizeLines": 43,
+          "fileCategory": "code"
+        }
+      ],
+      "batchImportData": {
+        "alchemy.run.ts": [
+          "src/bucket.ts",
+          "src/worker.ts"
+        ],
+        "src/bucket.ts": [],
+        "src/worker.ts": [
+          "src/bucket.ts"
+        ]
+      },
+      "neighborMap": {}
+    },
+    {
+      "batchIndex": 2,
+      "files": [
+        {
+          "path": "CLAUDE.md",
+          "language": "markdown",
+          "sizeLines": 111,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "README.md",
+          "language": "markdown",
+          "sizeLines": 15,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "biome.json",
+          "language": "json",
+          "sizeLines": 39,
+          "fileCategory": "config"
+        },
+        {
+          "path": "package.json",
+          "language": "json",
+          "sizeLines": 19,
+          "fileCategory": "config"
+        },
+        {
+          "path": "tsconfig.json",
+          "language": "json",
+          "sizeLines": 29,
+          "fileCategory": "config"
+        }
+      ],
+      "batchImportData": {
+        "CLAUDE.md": [],
+        "README.md": [],
+        "biome.json": [],
+        "package.json": [],
+        "tsconfig.json": []
+      },
+      "neighborMap": {}
+    },
+    {
+      "batchIndex": 3,
+      "files": [
+        {
+          "path": "assets/test.md",
+          "language": "markdown",
+          "sizeLines": 1,
+          "fileCategory": "docs"
+        },
+        {
+          "path": "index.ts",
+          "language": "typescript",
+          "sizeLines": 0,
+          "fileCategory": "code"
+        }
+      ],
+      "batchImportData": {
+        "assets/test.md": [],
+        "index.ts": []
+      },
+      "neighborMap": {}
+    }
+  ]
+}

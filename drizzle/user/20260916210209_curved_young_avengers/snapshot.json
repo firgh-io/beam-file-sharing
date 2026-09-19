@@ -1,0 +1,117 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "id": "b99fc794-be35-4fe0-ab72-5930b0d4ccfb",
+  "prevIds": [
+    "d0171601-b6b5-4fc1-a9aa-b0a82f9f7229"
+  ],
+  "ddl": [
+    {
+      "name": "quota_ledger",
+      "entityType": "tables"
+    },
+    {
+      "name": "user",
+      "entityType": "tables"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "file_id",
+      "entityType": "columns",
+      "table": "quota_ledger"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "bytes",
+      "entityType": "columns",
+      "table": "quota_ledger"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "state",
+      "entityType": "columns",
+      "table": "quota_ledger"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "lease_until",
+      "entityType": "columns",
+      "table": "quota_ledger"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "updated_at",
+      "entityType": "columns",
+      "table": "quota_ledger"
+    },
+    {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": "1",
+      "generated": null,
+      "name": "user_id",
+      "entityType": "columns",
+      "table": "user"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": "0",
+      "generated": null,
+      "name": "used_byte",
+      "entityType": "columns",
+      "table": "user"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "created_at",
+      "entityType": "columns",
+      "table": "user"
+    },
+    {
+      "columns": [
+        "file_id"
+      ],
+      "nameExplicit": false,
+      "name": "quota_ledger_pk",
+      "table": "quota_ledger",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "user_id"
+      ],
+      "nameExplicit": false,
+      "name": "user_pk",
+      "table": "user",
+      "entityType": "pks"
+    }
+  ],
+  "renames": []
+}

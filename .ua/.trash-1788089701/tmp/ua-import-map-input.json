@@ -1,0 +1,85 @@
+{
+  "projectRoot": "/Users/muhammadfirghili/alchemy-cloudflare",
+  "files": [
+    {
+      "path": ".ua/.understandignore",
+      "language": "unknown",
+      "fileCategory": "code"
+    },
+    {
+      "path": ".ua/config.json",
+      "language": "json",
+      "fileCategory": "config"
+    },
+    {
+      "path": ".ua/intermediate/scan-result.json",
+      "language": "json",
+      "fileCategory": "config"
+    },
+    {
+      "path": ".ua/tmp/ua-import-map-input.json",
+      "language": "json",
+      "fileCategory": "config"
+    },
+    {
+      "path": ".ua/tmp/ua-import-map-output.json",
+      "language": "json",
+      "fileCategory": "config"
+    },
+    {
+      "path": ".ua/tmp/ua-scan-files.json",
+      "language": "json",
+      "fileCategory": "config"
+    },
+    {
+      "path": "CLAUDE.md",
+      "language": "markdown",
+      "fileCategory": "docs"
+    },
+    {
+      "path": "README.md",
+      "language": "markdown",
+      "fileCategory": "docs"
+    },
+    {
+      "path": "alchemy.run.ts",
+      "language": "typescript",
+      "fileCategory": "code"
+    },
+    {
+      "path": "assets/test.md",
+      "language": "markdown",
+      "fileCategory": "docs"
+    },
+    {
+      "path": "biome.json",
+      "language": "json",
+      "fileCategory": "config"
+    },
+    {
+      "path": "index.ts",
+      "language": "typescript",
+      "fileCategory": "code"
+    },
+    {
+      "path": "package.json",
+      "language": "json",
+      "fileCategory": "config"
+    },
+    {
+      "path": "src/bucket.ts",
+      "language": "typescript",
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/worker.ts",
+      "language": "typescript",
+      "fileCategory": "code"
+    },
+    {
+      "path": "tsconfig.json",
+      "language": "json",
+      "fileCategory": "config"
+    }
+  ]
+}

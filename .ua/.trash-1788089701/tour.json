@@ -1,0 +1,47 @@
+[
+  {
+    "order": 1,
+    "title": "Project Overview",
+    "description": "Start with the README to see what this project is: a Bun-based TypeScript project scaffolded with bun init that uses the Alchemy and Effect libraries to define Cloudflare infrastructure in code. The README itself is minimal — it only covers bun install and running index.ts — which hints that the real story lives elsewhere, in the Alchemy stack definition we visit next.",
+    "nodeIds": ["document:README.md"]
+  },
+  {
+    "order": 2,
+    "title": "Alchemy Stack Definition",
+    "description": "alchemy.run.ts is the functional entry point of the project: it defines the \"NewApp\" Cloudflare deployment by wiring the R2 bucket and Worker resources together inside an Effect generator, then outputs the bucket name and Worker URL. This is infrastructure-as-code — running this file provisions real Cloudflare resources. Everything else in src/ exists to be composed here.",
+    "nodeIds": ["file:alchemy.run.ts"],
+    "languageLesson": "Effect generators (Effect.gen with function*) let you write async, error-aware code that reads like synchronous code: each 'yield*' unwraps an Effect value while preserving typed error channels — similar to async/await but with errors and dependencies tracked in the type system."
+  },
+  {
+    "order": 3,
+    "title": "The Shared R2 Bucket",
+    "description": "src/bucket.ts declares the Cloudflare R2 bucket resource — the highest fan-in module in the codebase, imported by both the stack definition from Step 2 and the Worker we see next. Declaring the bucket once in its own module means both consumers reference the exact same resource, so Alchemy can bind it to the Worker and track it as a single piece of infrastructure.",
+    "nodeIds": ["file:src/bucket.ts"]
+  },
+  {
+    "order": 4,
+    "title": "The Worker API",
+    "description": "src/worker.ts defines the Cloudflare Worker resource with an Effect-based fetch handler that implements a simple key-value HTTP API over the bucket from Step 3: PUT streams an upload into R2, GET reads an object back as text, missing keys return 404, and R2 failures map to 500. This is where the declared infrastructure meets actual request-handling logic — the Worker both consumes the bucket binding and is itself a resource composed in Step 2's stack.",
+    "nodeIds": ["file:src/worker.ts"],
+    "languageLesson": "Effect models failures as typed values instead of thrown exceptions: an R2Error appears in the Effect's error channel, and the handler converts it to a 500 response explicitly. This makes every failure path visible in the types, unlike try/catch where errors are invisible until runtime."
+  },
+  {
+    "order": 5,
+    "title": "Dependencies and Compiler Setup",
+    "description": "package.json declares the three pillars of the runtime stack — alchemy, effect, and the Effect platform adapters for Bun and Node — while tsconfig.json configures TypeScript in bundler mode with strict checking, noEmit, and direct .ts-extension imports. Together they explain how the code from Steps 2-4 type-checks and runs directly under Bun without a separate build step.",
+    "nodeIds": ["config:package.json", "config:tsconfig.json"],
+    "languageLesson": "Bundler-mode TypeScript with noEmit means tsc only type-checks; the runtime (Bun) executes .ts files directly. verbatimModuleSyntax forces explicit 'import type' for type-only imports, so the runtime never sees imports that should be erased."
+  },
+  {
+    "order": 6,
+    "title": "Tooling and Project Conventions",
+    "description": "biome.json configures the formatter and linter (tab indentation, single quotes, recommended rules, automatic import organization), and CLAUDE.md documents the project's Bun-first conventions for AI assistants — use Bun-native APIs like Bun.serve and bun test instead of Node.js equivalents. These files encode the house style that the source files from earlier steps follow.",
+    "nodeIds": ["config:biome.json", "document:CLAUDE.md"]
+  },
+  {
+    "order": 7,
+    "title": "Scaffold Leftovers and Test Asset",
+    "description": "index.ts is the stock bun init entry point — it just prints a hello message and holds no application logic, even though package.json still names it as the module entry; the real action is in alchemy.run.ts from Step 2. assets/test.md is a one-line placeholder file used as sample content for testing uploads to the R2 bucket via the Worker's PUT endpoint from Step 4. Recognizing which files are scaffolding versus substance completes your map of the project.",
+    "nodeIds": ["file:index.ts", "document:assets/test.md"]
+  }
+]

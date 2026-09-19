@@ -1,0 +1,16 @@
+{
+  "projectRoot": "/Users/muhammadfirghili/alchemy-cloudflare",
+  "sourceFilePaths": [
+    "CLAUDE.md",
+    "README.md",
+    "alchemy.run.ts",
+    "assets/test.md",
+    "biome.json",
+    "index.ts",
+    "package.json",
+    "src/bucket.ts",
+    "src/worker.ts",
+    "tsconfig.json"
+  ],
+  "gitCommitHash": "no-git"
+}

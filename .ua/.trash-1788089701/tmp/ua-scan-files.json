@@ -1,0 +1,119 @@
+{
+  "scriptCompleted": true,
+  "contentDigest": "827ffcb565d0ea4b69aa0bd4fdd0ee5e6ff148cdc3d1d51826855ed40d81e647",
+  "files": [
+    {
+      "path": ".ua/.understandignore",
+      "language": "unknown",
+      "sizeLines": 78,
+      "fileCategory": "code"
+    },
+    {
+      "path": ".ua/config.json",
+      "language": "json",
+      "sizeLines": 1,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".ua/intermediate/scan-result.json",
+      "language": "json",
+      "sizeLines": 292,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".ua/tmp/ua-import-map-input.json",
+      "language": "json",
+      "sizeLines": 0,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".ua/tmp/ua-import-map-output.json",
+      "language": "json",
+      "sizeLines": 95,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".ua/tmp/ua-scan-files.json",
+      "language": "json",
+      "sizeLines": 210,
+      "fileCategory": "config"
+    },
+    {
+      "path": "CLAUDE.md",
+      "language": "markdown",
+      "sizeLines": 111,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "README.md",
+      "language": "markdown",
+      "sizeLines": 15,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "alchemy.run.ts",
+      "language": "typescript",
+      "sizeLines": 23,
+      "fileCategory": "code"
+    },
+    {
+      "path": "assets/test.md",
+      "language": "markdown",
+      "sizeLines": 1,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "biome.json",
+      "language": "json",
+      "sizeLines": 39,
+      "fileCategory": "config"
+    },
+    {
+      "path": "index.ts",
+      "language": "typescript",
+      "sizeLines": 0,
+      "fileCategory": "code"
+    },
+    {
+      "path": "package.json",
+      "language": "json",
+      "sizeLines": 19,
+      "fileCategory": "config"
+    },
+    {
+      "path": "src/bucket.ts",
+      "language": "typescript",
+      "sizeLines": 3,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/worker.ts",
+      "language": "typescript",
+      "sizeLines": 43,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tsconfig.json",
+      "language": "json",
+      "sizeLines": 29,
+      "fileCategory": "config"
+    }
+  ],
+  "totalFiles": 16,
+  "filteredByIgnore": 19,
+  "estimatedComplexity": "small",
+  "stats": {
+    "filesScanned": 16,
+    "byCategory": {
+      "code": 5,
+      "config": 8,
+      "docs": 3
+    },
+    "byLanguage": {
+      "unknown": 1,
+      "json": 8,
+      "markdown": 3,
+      "typescript": 4
+    }
+  }
+}

@@ -1,0 +1,63 @@
+{
+  "nodes": [
+    {
+      "id": "file:alchemy.run.ts",
+      "type": "file",
+      "name": "alchemy.run.ts",
+      "filePath": "alchemy.run.ts",
+      "summary": "Alchemy stack entry point that defines the \"NewApp\" Cloudflare deployment: it wires the R2 bucket and Worker resources together via an Effect generator and outputs the bucket name and Worker URL.",
+      "tags": ["entry-point", "infrastructure-as-code", "deployment", "effect"],
+      "complexity": "simple",
+      "languageNotes": "Uses Effect's generator syntax (Effect.gen with yield*) to compose Alchemy resources declaratively inside a Stack definition."
+    },
+    {
+      "id": "file:src/bucket.ts",
+      "type": "file",
+      "name": "bucket.ts",
+      "filePath": "src/bucket.ts",
+      "summary": "Declares the shared Cloudflare R2 bucket resource (\"Bucket\") consumed by both the stack definition and the Worker.",
+      "tags": ["data-model", "infrastructure-as-code", "storage", "cloudflare-r2"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/worker.ts",
+      "type": "file",
+      "name": "worker.ts",
+      "filePath": "src/worker.ts",
+      "summary": "Defines the Cloudflare Worker resource with an Effect-based fetch handler implementing a simple key-value HTTP API over the R2 bucket: PUT streams an upload to the bucket, GET reads an object back as text, with 404 and R2Error-to-500 handling.",
+      "tags": ["api-handler", "service", "cloudflare-worker", "effect", "storage"],
+      "complexity": "moderate",
+      "languageNotes": "Binds the R2 bucket via Cloudflare.R2.ReadWriteBucket and provides the binding layer with Effect.provide; error handling uses Effect.catchTag on the typed R2Error channel instead of try/catch."
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:alchemy.run.ts",
+      "target": "file:src/bucket.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:alchemy.run.ts",
+      "target": "file:src/worker.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/worker.ts",
+      "target": "file:src/bucket.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/worker.ts",
+      "target": "file:src/bucket.ts",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+import { Duration } from "effect";
+
+export const USER_COOKIE_IDENTIFIER = "anon_id";
+
+export const MAX_FILE_SIZE = 100 * 1024 * 1024;
+
+export const MAX_EXPIRY_IN_DAYS = 7;
+
+export const USER_QUOTA_BYTES = 1024 * 1024 * 1024;
+
+export const LEASE_MARGIN = Duration.hours(24);
+
+export const DEFAULT_EXPIRY = Duration.hours(24);
+
+export const FILE_DO_ALARM_ID = "file-do-alarm-trigger";
+
+export const QUARANTINE_TTL = Duration.days(2);
+
+export const SCAN_TIMEOUT = Duration.hours(1);
+
+export const errorCode = {
+  tooManyRequests: "TOO_MANY_REQUESTS",
+  payloadInvalid: "BAD_REQUEST",
+  quotaExceeded: "QUOTA_EXCEEDED",
+};
+
+export const URL_TTL = Duration.minutes(15);
+export const LEASE_GRACE = Duration.minutes(5);

@@ -1,0 +1,178 @@
+{
+  "version": "1.0.0",
+  "gitCommitHash": "no-git",
+  "generatedAt": "2026-08-30T11:34:52.660Z",
+  "files": {
+    "CLAUDE.md": {
+      "filePath": "CLAUDE.md",
+      "contentHash": "d2a17c0be7103e630bc8955d900380397935043b17a9a4d734989871431a6e5a",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 112,
+      "hasStructuralAnalysis": true
+    },
+    "README.md": {
+      "filePath": "README.md",
+      "contentHash": "7d7b8997d6630cb9a38d8d92c4d8fe63de2850cfc71a13cbf8d30a3bd064691b",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 16,
+      "hasStructuralAnalysis": true
+    },
+    "alchemy.run.ts": {
+      "filePath": "alchemy.run.ts",
+      "contentHash": "0dfda9703b15cafac6530921e37b4ea099896ffb08aa6f82974ac874ef503fc2",
+      "functions": [],
+      "classes": [],
+      "imports": [
+        {
+          "source": "alchemy",
+          "specifiers": [
+            "* as Alchemy"
+          ]
+        },
+        {
+          "source": "alchemy/Cloudflare",
+          "specifiers": [
+            "* as Cloudflare"
+          ]
+        },
+        {
+          "source": "effect/Effect",
+          "specifiers": [
+            "* as Effect"
+          ]
+        },
+        {
+          "source": "./src/bucket",
+          "specifiers": [
+            "Bucket"
+          ]
+        },
+        {
+          "source": "./src/worker",
+          "specifiers": [
+            "Worker"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 24,
+      "hasStructuralAnalysis": true
+    },
+    "assets/test.md": {
+      "filePath": "assets/test.md",
+      "contentHash": "acd46b1b9ef82e0780861b9142edce7d010a5025fe67b00849055807a7903f53",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 2,
+      "hasStructuralAnalysis": true
+    },
+    "biome.json": {
+      "filePath": "biome.json",
+      "contentHash": "4856f106293cf94e1951107bbf34485d3f1a05f67032fbb576d1ac3eda6bafab",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 40,
+      "hasStructuralAnalysis": true
+    },
+    "index.ts": {
+      "filePath": "index.ts",
+      "contentHash": "39e1ff1373d5a21bb3cbb5b9b4be13afbaafc73a33293f293d40656449b70de7",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 1,
+      "hasStructuralAnalysis": true
+    },
+    "package.json": {
+      "filePath": "package.json",
+      "contentHash": "533c14a394ca1ed8f354002056bfe9bcc8ececbca8d9e2e3c6554f5c92a28021",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 20,
+      "hasStructuralAnalysis": true
+    },
+    "src/bucket.ts": {
+      "filePath": "src/bucket.ts",
+      "contentHash": "76e357a9909b9cb85604a4c9d27dc1341a473b10c9237f792859fe36f28c5ef4",
+      "functions": [],
+      "classes": [],
+      "imports": [
+        {
+          "source": "alchemy/Cloudflare",
+          "specifiers": [
+            "* as Cloudflare"
+          ]
+        }
+      ],
+      "exports": [
+        "Bucket"
+      ],
+      "totalLines": 4,
+      "hasStructuralAnalysis": true
+    },
+    "src/worker.ts": {
+      "filePath": "src/worker.ts",
+      "contentHash": "832c83bae19a47502185af7da52273071e3cba1dfb3e5e03a967d9dc5b4ec25b",
+      "functions": [],
+      "classes": [],
+      "imports": [
+        {
+          "source": "alchemy/Cloudflare",
+          "specifiers": [
+            "* as Cloudflare"
+          ]
+        },
+        {
+          "source": "effect/unstable/http/HttpServerRequest",
+          "specifiers": [
+            "HttpServerRequest"
+          ]
+        },
+        {
+          "source": "effect/unstable/http/HttpServerResponse",
+          "specifiers": [
+            "* as HttpServerResponse"
+          ]
+        },
+        {
+          "source": "effect/Effect",
+          "specifiers": [
+            "* as Effect"
+          ]
+        },
+        {
+          "source": "./bucket",
+          "specifiers": [
+            "Bucket"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 44,
+      "hasStructuralAnalysis": true
+    },
+    "tsconfig.json": {
+      "filePath": "tsconfig.json",
+      "contentHash": "11a68339a9c6a0c04a67b95dff9eefd9a92c42fa35161411048405272ab192c8",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 30,
+      "hasStructuralAnalysis": true
+    }
+  }
+}

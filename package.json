@@ -1,0 +1,26 @@
+{
+  "name": "alchemy-cloudflare",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@biomejs/biome": "2.5.11",
+    "@types/bun": "latest",
+    "drizzle-kit": "1.0.0-rc.5-ab785fc"
+  },
+  "scripts": {
+    "db:generate": "bun run db:generate:file && bun run db:generate:user",
+    "db:generate:file": "drizzle-kit generate --config drizzle/file.config.ts",
+    "db:generate:user": "drizzle-kit generate --config drizzle/user.config.ts"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@effect/platform-bun": "^4.0.0-rc.112",
+    "@effect/platform-node": "^4.0.0-rc.112",
+    "alchemy": "^2.0.0-beta.74",
+    "drizzle-orm": "1.0.0-rc.5-ab785fc",
+    "effect": "^4.0.0-rc.112"
+  }
+}

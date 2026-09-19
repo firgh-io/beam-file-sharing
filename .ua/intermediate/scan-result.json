@@ -1,0 +1,92 @@
+{
+  "name": "alchemy-cloudflare",
+  "description": "A TypeScript project scaffolded with bun init on the Bun runtime, using the Alchemy and Effect libraries to define Cloudflare infrastructure such as a Worker and a bucket.",
+  "languages": [
+    "json",
+    "markdown",
+    "typescript"
+  ],
+  "frameworks": [],
+  "files": [
+    {
+      "path": "CLAUDE.md",
+      "language": "markdown",
+      "sizeLines": 111,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "README.md",
+      "language": "markdown",
+      "sizeLines": 15,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "alchemy.run.ts",
+      "language": "typescript",
+      "sizeLines": 23,
+      "fileCategory": "code"
+    },
+    {
+      "path": "assets/test.md",
+      "language": "markdown",
+      "sizeLines": 1,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "biome.json",
+      "language": "json",
+      "sizeLines": 39,
+      "fileCategory": "config"
+    },
+    {
+      "path": "index.ts",
+      "language": "typescript",
+      "sizeLines": 0,
+      "fileCategory": "code"
+    },
+    {
+      "path": "package.json",
+      "language": "json",
+      "sizeLines": 19,
+      "fileCategory": "config"
+    },
+    {
+      "path": "src/bucket.ts",
+      "language": "typescript",
+      "sizeLines": 3,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/worker.ts",
+      "language": "typescript",
+      "sizeLines": 43,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tsconfig.json",
+      "language": "json",
+      "sizeLines": 29,
+      "fileCategory": "config"
+    }
+  ],
+  "totalFiles": 10,
+  "filteredByIgnore": 25,
+  "estimatedComplexity": "small",
+  "importMap": {
+    "CLAUDE.md": [],
+    "README.md": [],
+    "alchemy.run.ts": [
+      "src/bucket.ts",
+      "src/worker.ts"
+    ],
+    "assets/test.md": [],
+    "biome.json": [],
+    "index.ts": [],
+    "package.json": [],
+    "src/bucket.ts": [],
+    "src/worker.ts": [
+      "src/bucket.ts"
+    ],
+    "tsconfig.json": []
+  }
+}

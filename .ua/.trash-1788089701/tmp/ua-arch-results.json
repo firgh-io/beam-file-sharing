@@ -1,0 +1,151 @@
+{
+  "scriptCompleted": true,
+  "commonPrefix": "",
+  "directoryGroups": {
+    "(root)": [
+      "file:alchemy.run.ts",
+      "document:CLAUDE.md",
+      "document:README.md",
+      "config:biome.json",
+      "config:package.json",
+      "config:tsconfig.json",
+      "file:index.ts"
+    ],
+    "src": [
+      "file:src/bucket.ts",
+      "file:src/worker.ts"
+    ],
+    "assets": [
+      "document:assets/test.md"
+    ]
+  },
+  "nodeTypeGroups": {
+    "file": [
+      "file:alchemy.run.ts",
+      "file:src/bucket.ts",
+      "file:src/worker.ts",
+      "file:index.ts"
+    ],
+    "document": [
+      "document:CLAUDE.md",
+      "document:README.md",
+      "document:assets/test.md"
+    ],
+    "config": [
+      "config:biome.json",
+      "config:package.json",
+      "config:tsconfig.json"
+    ]
+  },
+  "crossCategoryEdges": [
+    {
+      "fromType": "config",
+      "toType": "file",
+      "edgeType": "configures",
+      "count": 4
+    },
+    {
+      "fromType": "document",
+      "toType": "file",
+      "edgeType": "documents",
+      "count": 2
+    },
+    {
+      "fromType": "document",
+      "toType": "config",
+      "edgeType": "related",
+      "count": 1
+    }
+  ],
+  "interGroupImports": [
+    {
+      "from": "(root)",
+      "to": "src",
+      "count": 2
+    }
+  ],
+  "intraGroupDensity": {
+    "(root)": {
+      "internalEdges": 0,
+      "totalEdges": 2,
+      "density": 0
+    },
+    "src": {
+      "internalEdges": 1,
+      "totalEdges": 3,
+      "density": 0.3333333333333333
+    },
+    "assets": {
+      "internalEdges": 0,
+      "totalEdges": 0,
+      "density": 0
+    }
+  },
+  "patternMatches": {
+    "assets": "assets"
+  },
+  "filePatternMatches": {
+    "document:CLAUDE.md": "documentation",
+    "document:README.md": "documentation",
+    "document:assets/test.md": "documentation",
+    "file:index.ts": "entry"
+  },
+  "deploymentTopology": {
+    "hasDockerfile": false,
+    "hasCompose": false,
+    "hasK8s": false,
+    "hasTerraform": false,
+    "hasCI": false,
+    "infraFiles": []
+  },
+  "dataPipeline": {
+    "schemaFiles": [],
+    "migrationFiles": [],
+    "dataModelFiles": [
+      "src/bucket.ts"
+    ],
+    "apiHandlerFiles": [
+      "src/worker.ts"
+    ]
+  },
+  "docCoverage": {
+    "groupsWithDocs": 2,
+    "totalGroups": 3,
+    "coverageRatio": 0.67,
+    "undocumentedGroups": [
+      "src"
+    ],
+    "docFiles": [
+      "CLAUDE.md",
+      "README.md",
+      "assets/test.md"
+    ]
+  },
+  "dependencyDirection": [
+    {
+      "dependent": "(root)",
+      "dependsOn": "src"
+    }
+  ],
+  "fileStats": {
+    "totalFileNodes": 10,
+    "filesPerGroup": {
+      "(root)": 7,
+      "src": 2,
+      "assets": 1
+    },
+    "nodeTypeCounts": {
+      "file": 4,
+      "document": 3,
+      "config": 3
+    }
+  },
+  "fileFanIn": {
+    "file:src/bucket.ts": 2,
+    "file:src/worker.ts": 1
+  },
+  "fileFanOut": {
+    "file:alchemy.run.ts": 2,
+    "file:src/worker.ts": 1
+  }
+}

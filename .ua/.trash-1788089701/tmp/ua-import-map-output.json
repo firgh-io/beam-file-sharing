@@ -1,0 +1,31 @@
+{
+  "scriptCompleted": true,
+  "stats": {
+    "filesScanned": 16,
+    "filesWithImports": 2,
+    "totalEdges": 3
+  },
+  "importMap": {
+    ".ua/.understandignore": [],
+    ".ua/config.json": [],
+    ".ua/intermediate/scan-result.json": [],
+    ".ua/tmp/ua-import-map-input.json": [],
+    ".ua/tmp/ua-import-map-output.json": [],
+    ".ua/tmp/ua-scan-files.json": [],
+    "CLAUDE.md": [],
+    "README.md": [],
+    "alchemy.run.ts": [
+      "src/bucket.ts",
+      "src/worker.ts"
+    ],
+    "assets/test.md": [],
+    "biome.json": [],
+    "index.ts": [],
+    "package.json": [],
+    "src/bucket.ts": [],
+    "src/worker.ts": [
+      "src/bucket.ts"
+    ],
+    "tsconfig.json": []
+  }
+}

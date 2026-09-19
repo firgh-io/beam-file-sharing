@@ -1,0 +1,14 @@
+{
+  "fixedSectionOk": true,
+  "nodesRecovered": 0,
+  "edgesRestored": 0,
+  "crossBatchEdgesAdded": 0,
+  "typesRemapped": 0,
+  "complexityRemapped": 0,
+  "notes": [
+    "Merge report contained no 'Fixed' or 'Could not fix' entries; batch output was already fully canonical (no ID corrections, no unknown types or complexity values).",
+    "Node/edge counts passed through unchanged (10 nodes, 11 edges in and out); no duplicates and no dangling edges were dropped.",
+    "All three import relationships in the import map are covered by existing 'imports' edges (weight 0.7, direction forward); no cross-batch edges were missing.",
+    "src/bucket.ts and src/worker.ts have no 'configures' edge from tsconfig.json (only index.ts and alchemy.run.ts do); left as-is since configures edges are not backed by the import map."
+  ]
+}
