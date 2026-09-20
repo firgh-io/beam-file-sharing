@@ -143,6 +143,61 @@ Do NOT fire-and-forget by calling RPC without awaiting: isolates (V8 sandboxes r
 - In-request orchestration (A → B inside one `fetch`) has no checkpointing: a mid-chain crash means the caller retries from scratch and step A runs twice. Reach for a Workflow when that's unacceptable.
 - Effect fundamentals under it all: yields are interpreted by the running fiber's context (that's how one line means two things), typed errors stay in the type until handled (`catchTag`), and `Effect.provide` fills the context map — the compiler refuses to run a program with unmet requirements.
 
+## Correctness principles (general, not Alchemy-specific)
+
+**Transactions**
+
+- Only rollbackable work goes inside. HTTP, RPC, queue sends, blob writes/deletes, emails, payments do not undo — record the intent in the transaction, perform the effect after commit.
+- Never hold a transaction open across a network call: lock duration is contention, and a slow peer becomes a database outage.
+- External reads before, external writes after. Gather, open, pure DB work, commit, then fire effects.
+- One handle per transaction. Reading through the tx and writing through the pooled connection gives you two views of the world.
+- The transaction boundary is the consistency boundary — anything read outside it may be stale by the time you act.
+
+**Retries and idempotency**
+
+- At-least-once is the default; anything retryable will run twice. Exactly-once *delivery* doesn't exist, exactly-once *effect* does — via idempotent handlers.
+- Prefer absolute values to deltas. `set total = 500` survives replay; `total = total + 100` corrupts on the second run, permanently and undetectably.
+- DELETE and upsert are naturally idempotent. INSERT and increment are not — give those an idempotency key.
+- Every retry loop needs a bound and a dead-letter path. Unbounded retry on a permanent failure is an outage, not resilience.
+- Ordered queues suffer head-of-line blocking: one poison message stops unrelated work behind it.
+- Persist retry state with the work. An in-memory attempt counter resets on restart and silently disables backoff.
+
+**Failure direction**
+
+- Decide fail-open vs fail-closed per check, deliberately. Quota, auth, balance, rate limits fail closed. The dangerous case is not deciding.
+- Absence must never become a permissive default: `null → 0`, `missing → empty`, `error → skip` all read as "go ahead", because the empty value is usually the allowing one.
+- Zero rows affected is a signal, not a success. If an UPDATE/DELETE assumes a target, check the count — most drivers won't volunteer it.
+- Beware APIs that succeed either way. Idempotent deletes hide wrong-target bugs completely.
+- Raise errors where they're detectable, not where it's convenient. Converting failure into plausible data moves the crash somewhere with no context.
+
+**Time and ordering**
+
+- Any two timeouts governing the same object need a stated ordering (lease vs retry budget, TTL vs refresh). Write the inequality down — most timeout bugs are two constants that were never compared.
+- Derive margins from the deadline they protect, not as independent numbers that drift apart in refactors.
+- Insertion order is not a database guarantee. If order matters, `ORDER BY` explicitly.
+- Never order distributed events by wall-clock timestamps. Use sequence numbers, versions, or logical clocks.
+- Expiry is a state transition, not a fact about a timestamp — something has to run to enact it, and it can be late or never fire.
+
+**Ownership and derived state**
+
+- One writer per piece of state. Two components maintaining the same field is drift with a delayed fuse.
+- Compute before you cache. A derived value stored beside its source is a second source of truth — earn it with a measurement.
+- A cached derived value owes you two things: a recompute-from-source path, and drift detection. Incremental maintenance without either is the most drift-prone option available.
+- A component reaching for an identifier it doesn't own is misplaced logic. The missing data is the signal; the wrong identifier is the symptom.
+- Cross-service invariants can't be enforced by types. Single ownership or periodic reconciliation — the compiler won't help.
+
+**Effects and laziness**
+
+- Constructing isn't running. Lazy effect types, un-awaited promises, query builders — all let you write the expression and perform nothing. Lint for it.
+- If an action-named function returns a value, find the consumer. A discarded return from a verb is usually a dropped obligation.
+- A `void` return type is a claim that the effect happened. Make sure it's true.
+
+**Types at boundaries**
+
+- A type error where data crosses a boundary is a design question. Answer "can this be absent, and what happens if it is?" — impossible by construction, expected and the caller decides, or the invariant is broken. Each has a different fix; `!` picks one at random.
+- Same-typed identifiers are interchangeable to the compiler. Two `string` ids in one scope is an unguarded swap — brand them, or keep them apart.
+- Prefer a sum type to a nullable field whose meaning depends on another field. "Means X when status is A, Y when status is B" is a comment where a type should be.
+
 ## Version pins (this repo)
 
 `alchemy@2.0.0-beta.74` · `effect@4.0.0-rc.112` — both pre-release; APIs may shift. Source of truth: `node_modules/alchemy/src/**` (readable TypeScript) and https://alchemy.run/llms.txt.

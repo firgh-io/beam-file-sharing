@@ -17,9 +17,11 @@ import {
 } from "./api/schema";
 import * as DateTime from "effect/DateTime";
 import UserDO from "../durable-objects/user";
+import FileDO from "../durable-objects/file";
 import { Layer, Option, Path } from "effect";
 import * as HttpRouter from "effect/unstable/http/HttpRouter";
 import { Etag, HttpPlatform } from "effect/unstable/http";
+import type { NewFileInput } from "../durable-objects/file";
 
 type Reason = typeof UploadRequestInvalidReason.Type;
 type Rule = readonly [
@@ -140,6 +142,7 @@ export default Cloudflare.Worker(
 
             /* Generate File ID */
             const fileId = crypto.randomUUID();
+            const fileBlobId = crypto.randomUUID();
 
             /* Call user operation */
             yield* userDO
@@ -152,7 +155,18 @@ export default Cloudflare.Worker(
                 ),
               );
 
-            yield* fileDo.
+            yield* fileDO.getByName(fileId).initialize({
+              fileId,
+              fileBlobId,
+              fileName: payload.fileName,
+              expiresAt: DateTime.formatIso(payload.expiresAt),
+              fileSize: payload.fileSize,
+              fileType: payload.fileType,
+              maxDownloadCount: payload.maxDownloadCount,
+            });
+
+            // TO DO:
+            // - RETURN PRESIGNED URL
           }),
         ),
     );

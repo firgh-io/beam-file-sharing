@@ -4,7 +4,7 @@ import * as Drizzle from "alchemy/Drizzle/Cloudflare";
 import { userTable, relations, quotaLedgerTable } from "./schema/user.schema";
 import migrations from "../../drizzle/user/migrations";
 import type { EffectSQLiteDOTransaction } from "drizzle-orm/effect-sqlite-do";
-import { lt, eq, and, sql } from "drizzle-orm";
+import { lt, eq, sql } from "drizzle-orm";
 import { DateTime, Duration } from "effect";
 import {
   errorCode,
@@ -115,23 +115,37 @@ export default class UserDO extends Cloudflare.DurableObject<UserDO>()(
                 SqlError: Effect.die,
               }),
             ),
-        // TO DO: complete the commit file function
         commitFile: (fileId: string, fileSize: number, leaseUntil: string) =>
           Effect.gen(function* () {
             const now = yield* DateTime.now;
-            db.update(quotaLedgerTable)
-              .set({
+            return yield* db
+              .insert(quotaLedgerTable)
+              .values({
+                fileId,
                 bytes: fileSize,
-                leaseUntil,
                 state: "COMMITTED",
+                leaseUntil,
                 updatedAt: DateTime.formatIso(now),
               })
-              .where(eq(quotaLedgerTable.fileId, fileId));
+              .onConflictDoUpdate({
+                target: quotaLedgerTable.fileId,
+                set: {
+                  bytes: fileSize,
+                  state: "COMMITTED",
+                  leaseUntil,
+                  updatedAt: DateTime.formatIso(now),
+                },
+              })
+              .returning()
+              .pipe(Effect.map((rows) => rows[0]));
           }),
-        // TO DO: complete the release file function
         releaseFile: (fileId: string) =>
           Effect.gen(function* () {
-            db.update(quotaLedgerTable).set({});
+            return yield* db
+              .delete(quotaLedgerTable)
+              .where(eq(quotaLedgerTable.fileId, fileId))
+              .returning()
+              .pipe(Effect.map((rows) => rows[0]));
           }),
       };
     });

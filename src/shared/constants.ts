@@ -18,6 +18,8 @@ export const QUARANTINE_TTL = Duration.days(2);
 
 export const SCAN_TIMEOUT = Duration.hours(1);
 
+export const MAX_OUTBOX_DRAIN_ATTEMPT = 10;
+
 export const errorCode = {
   tooManyRequests: "TOO_MANY_REQUESTS",
   payloadInvalid: "BAD_REQUEST",
