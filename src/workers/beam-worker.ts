@@ -2,14 +2,17 @@ import * as Cloudflare from "alchemy/Cloudflare";
 import * as Effect from "effect/Effect";
 import {
   errorCode,
+  LEASE_GRACE,
   MAX_EXPIRY_IN_DAYS,
   MAX_FILE_SIZE,
+  URL_TTL,
   USER_COOKIE_IDENTIFIER,
 } from "../shared/constants";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
 import { UploadRequestApi } from "./api/api";
 import {
   UploadRequest,
+  UploadRequestInitialized,
   UploadRequestInvalidReason,
   UploadRequestPayloadInvalid,
   UploadRequestQuotaExceeded,
@@ -18,10 +21,15 @@ import {
 import * as DateTime from "effect/DateTime";
 import UserDO from "../durable-objects/user";
 import FileDO from "../durable-objects/file";
-import { Layer, Option, Path } from "effect";
-import * as HttpRouter from "effect/unstable/http/HttpRouter";
-import { Etag, HttpPlatform } from "effect/unstable/http";
-import type { NewFileInput } from "../durable-objects/file";
+import { Duration, Layer, Option, Path } from "effect";
+import {
+  Etag,
+  HttpEffect,
+  HttpPlatform,
+  HttpServerResponse,
+  HttpRouter,
+} from "effect/unstable/http";
+import { R2Presign } from "../r2/presign";
 
 type Reason = typeof UploadRequestInvalidReason.Type;
 type Rule = readonly [
@@ -101,6 +109,7 @@ export default Cloudflare.Worker(
     });
     const userDO = yield* UserDO;
     const fileDO = yield* FileDO;
+    const presign = yield* R2Presign;
 
     const uploadRequestGroup = HttpApiBuilder.group(
       UploadRequestApi,
@@ -140,6 +149,23 @@ export default Cloudflare.Worker(
             const userId =
               cookies[USER_COOKIE_IDENTIFIER] || crypto.randomUUID();
 
+            yield* HttpEffect.appendPreResponseHandler((_req, response) =>
+              Effect.orDie(
+                HttpServerResponse.setCookie(
+                  response,
+                  USER_COOKIE_IDENTIFIER,
+                  userId,
+                  {
+                    httpOnly: true,
+                    secure: true,
+                    sameSite: "lax",
+                    path: "/",
+                    maxAge: Duration.days(365),
+                  },
+                ),
+              ),
+            );
+
             /* Generate File ID */
             const fileId = crypto.randomUUID();
             const fileBlobId = crypto.randomUUID();
@@ -167,6 +193,21 @@ export default Cloudflare.Worker(
 
             // TO DO:
             // - RETURN PRESIGNED URL
+            const presignUrlTTL = Duration.toSeconds(
+              Duration.sum(URL_TTL, LEASE_GRACE),
+            );
+            const uploadUrl = yield* presign({
+              key: fileBlobId,
+              method: "PUT",
+              expiresIn: presignUrlTTL,
+              fileSize: payload.fileSize,
+              fileType: payload.fileType,
+            });
+
+            return new UploadRequestInitialized({
+              fileId,
+              uploadUrl,
+            });
           }),
         ),
     );

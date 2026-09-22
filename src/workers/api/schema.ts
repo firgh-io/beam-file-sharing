@@ -10,7 +10,10 @@ import {
   withDecodingDefaultType,
   Literals,
 } from "effect/Schema";
-import { MAX_EXPIRY_IN_DAYS } from "../../shared/constants";
+import {
+  MAX_EXPIRY_IN_DAYS,
+  USER_COOKIE_IDENTIFIER,
+} from "../../shared/constants";
 
 export class UploadRequest extends Class<UploadRequest>("UploadRequest")({
   fileName: String,
@@ -26,6 +29,12 @@ export class UploadRequest extends Class<UploadRequest>("UploadRequest")({
   maxDownloadCount: optional(Number),
 }) {}
 
+export class UploadRequestInitialized extends Class<UploadRequestInitialized>(
+  "UploadRequestInitialized",
+)({
+  fileId: String,
+  uploadUrl: String,
+}) {}
 export class UploadRequestRateLimited extends TaggedError<UploadRequestRateLimited>()(
   "UploadRequestRateLimited",
   { id: String },

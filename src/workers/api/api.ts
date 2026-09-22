@@ -10,6 +10,7 @@ import {
   UploadRequestQuotaExceeded,
   UploadRequestPayloadInvalid,
   UploadRequestRateLimited,
+  UploadRequestInitialized,
 } from "./schema";
 import {
   HttpApi,
@@ -22,6 +23,7 @@ export const encodeUploadRequest = encodeUnknownEffect(UploadRequest);
 
 const intializeUpload = HttpApiEndpoint.post("initializeUpload", "/v1/upload", {
   payload: UploadRequest,
+  success: UploadRequestInitialized,
   error: Union([
     UploadRequestRateLimited,
     UploadRequestPayloadInvalid,
