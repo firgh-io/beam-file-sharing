@@ -12,7 +12,7 @@ import {
   URL_TTL,
   USER_QUOTA_BYTES,
 } from "../shared/constants";
-import { UploadRequestQuotaExceeded } from "../workers/api/schema";
+import { UploadRequestQuotaExceeded } from "../workers/api/api-schema";
 
 type Tx = EffectSQLiteDOTransaction<typeof relations>;
 

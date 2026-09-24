@@ -15,6 +15,7 @@ import {
   USER_COOKIE_IDENTIFIER,
 } from "../../shared/constants";
 
+/* ----------------------  UPLOAD -------------------------------------- */
 export class UploadRequest extends Class<UploadRequest>("UploadRequest")({
   fileName: String,
   fileSize: Number,
@@ -59,4 +60,36 @@ export class UploadRequestQuotaExceeded extends TaggedError<UploadRequestQuotaEx
   "UploadRequestQuotaExceeded",
   { id: String, usedBytes: Number, requestedBytes: Number, limitBytes: Number },
   { httpApiStatus: 413 },
+) {}
+
+/* ----------------------  COMPLETE -------------------------------------- */
+
+export class UploadCompleteSuccess extends Class<UploadCompleteSuccess>(
+  "UploadCompleteSuccess",
+)({
+  sharableLink: String,
+}) {}
+
+export class UploadCompleteUnauthorizedFileAccess extends TaggedError<UploadCompleteUnauthorizedFileAccess>()(
+  "UploadCompleteUnauthorizedFileAccess",
+  { id: String },
+  { httpApiStatus: 401 },
+) {}
+
+export class UploadCompleteFileNotFound extends TaggedError<UploadCompleteFileNotFound>()(
+  "UploadCompleteFileNotFound",
+  { id: String },
+  { httpApiStatus: 404 },
+) {}
+
+export class UploadCompleteFileSizeMismatch extends TaggedError<UploadCompleteFileSizeMismatch>()(
+  "UploadCompleteFileSizeMismatch",
+  { id: String },
+  { httpApiStatus: 400 },
+) {}
+
+export class UploadCompleteUploadNotVisible extends TaggedError<UploadCompleteUploadNotVisible>()(
+  "UploadCompleteUploadNotVisible",
+  { id: String },
+  { httpApiStatus: 409 },
 ) {}

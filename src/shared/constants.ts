@@ -24,6 +24,8 @@ export const errorCode = {
   tooManyRequests: "TOO_MANY_REQUESTS",
   payloadInvalid: "BAD_REQUEST",
   quotaExceeded: "QUOTA_EXCEEDED",
+  unauthorizedFileAccess: "UNAUTHORIZED_FILE_ACCESS",
+  fileNotFound: "FILE_NOT_FOUND",
 };
 
 export const URL_TTL = Duration.minutes(15);

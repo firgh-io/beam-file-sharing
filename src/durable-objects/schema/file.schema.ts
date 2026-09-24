@@ -10,7 +10,7 @@ import { timestamps } from "./helpers";
 
 export const fileTable = sqliteTable("file", {
   fileId: text("file_id").primaryKey(),
-  ownerId: text("owner_id"),
+  ownerId: text("owner_id").notNull(),
   fileBlobId: text("file_blob_id").notNull(),
   fileName: text("file_name"),
   fileType: text("file_type"),

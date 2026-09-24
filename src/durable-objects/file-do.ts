@@ -7,7 +7,7 @@ import type {
   EffectSQLiteDOTransaction,
 } from "drizzle-orm/effect-sqlite-do";
 import migrations from "../../drizzle/file/migrations";
-import UserDO from "./user";
+import UserDO from "./user-do";
 import { asc, eq, lt } from "drizzle-orm";
 import { Array, DateTime, Duration, Option, Result, Schedule } from "effect";
 import {
@@ -335,6 +335,14 @@ export default class FileDO extends Cloudflare.DurableObject<FileDO>()(
 
               yield* scheduleNextWakeup(dbInstance, fileRow, now);
             }
+          }),
+        getFile: () =>
+          Effect.gen(function* () {
+            return yield* getFileRow(dbInstance);
+          }),
+        drainOutbox: () =>
+          Effect.gen(function* () {
+            return yield* drainOutbox(dbInstance, filesBucket);
           }),
       };
     });

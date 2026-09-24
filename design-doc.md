@@ -186,17 +186,29 @@ The row is deleted only on success. At-least-once delivery into an idempotent re
 
 An empty outbox means the File DO owes nothing. A non-empty outbox on a healthy file means a hand-off is in progress or stalled, and is a useful thing to alert on.
 
-### Why the resume check reads the outbox, not the status
+### Why the resume check reads both the status and the outbox
 
-A retried `/complete` must distinguish three situations. Only the outbox distinguishes them correctly:
+A retried `/complete` decides two independent things, and they have two different sources of truth:
 
-| Observed                               | Meaning                           | Action            |
-| -------------------------------------- | --------------------------------- | ----------------- |
-| Outbox has a row                       | Crashed mid-hand-off; debt unpaid | Drain, return 200 |
-| Outbox empty, ledger `COMMITTED`       | True replay; already charged      | Return 200        |
-| Outbox empty, status `AWAITING_UPLOAD` | First call                        | Proceed           |
+- **What to tell the client** — the file's `status`. It is the only field that says whether this file is still alive.
+- **What work is still owed** — the outbox. It is the only structure that says whether the hand-off to the User DO landed.
 
-Branching on `status == 'STORED'` alone would return success for a file whose bytes were never charged, permanently and silently.
+Either one read alone is wrong, in opposite directions:
+
+| Rule                        | Fails on                                                                                                                       |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `status == 'STORED'` alone  | Returns success for a file whose bytes were never charged, permanently and silently.                                             |
+| Outbox non-empty → drain, 200 | A `release` queued by the lifecycle alarm is also a non-empty outbox. Returns 200 for a file the drain is about to delete. |
+
+The second case is not hypothetical. A 100 MB upload that begins at `created_at + 2m` and finishes at `created_at + 21m` misses the `AWAITING_UPLOAD` deadline of `created_at + URL_TTL + GRACE`. By then the alarm has set `status = DELETED` and queued `release`. A `/complete` branching on "outbox non-empty" drains that row, deletes the object, and reports success to the uploader whose file it just destroyed.
+
+So:
+
+> **The status decides the response. The outbox decides what work runs before responding.**
+
+**A mixed outbox is safe only by ordering.** A `commit` whose drain keeps failing can still be open when the `STORED` watchdog queues a `release`. Both rows are then present, and `drainOutbox()` processes them oldest first: charge, then release. The ordering is load-bearing, not incidental.
+
+**A stalled `commit` still returns 200.** If the drain cannot deliver, the bytes are in R2 and the status is `STORED`, so the upload did succeed from the client's side. The unpaid debt is an internal accounting failure: it must alert, and it must not be reported to the client as a failed upload.
 
 ### The single alarm
 
@@ -383,11 +395,12 @@ The client PUTs the file directly to R2 using the presigned URL. No Worker is in
 `POST /v1/uploads/:file_id/complete`
 
 1. **Authenticate.** Compare the File DO's `owner_id` against the `anon_id` cookie. On mismatch, return 401.
-2. **Resume check** (in this order):
-   1. Outbox is non-empty → `drainOutbox()`, return 200. A previous attempt crashed mid-hand-off.
-   2. Ledger row for this file is `COMMITTED` → return 200. True replay.
-   3. Status is `AWAITING_UPLOAD` → proceed.
-   4. Any other status → return the corresponding error.
+2. **Resume check.** Branch on `status`, and drain before responding:
+   1. `AWAITING_UPLOAD` → first call, or a crash before step 4's transaction. Proceed to step 3.
+   2. `STORED` or `AVAILABLE` → replay. `drainOutbox()` if the outbox is non-empty, then return 200.
+   3. Any other status (`DELETED`, `EXPIRED`, `QUARANTINED`) → return the error for that status.
+
+   The ledger is not read here. An outbox row is deleted only after `USER_DO.commit` returns ok, so `STORED` with an empty outbox already implies the ledger is `COMMITTED` — checking it would be a cross-DO round trip for an answer the File DO already holds. See [Why the resume check reads both the status and the outbox](#why-the-resume-check-reads-both-the-status-and-the-outbox).
 3. **HEAD R2.**
    - **Object present and `head.size == file_size`** → proceed to step 4.
    - **Object missing, still within `created_at + URL_TTL + GRACE`** → return a retryable error. The upload may still be in flight; do not mark the file dead. The lifecycle alarm handles it if it never arrives.

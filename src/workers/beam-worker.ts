@@ -11,16 +11,19 @@ import {
 import { HttpApiBuilder } from "effect/unstable/httpapi";
 import { UploadRequestApi } from "./api/api";
 import {
+  UploadCompleteFileNotFound,
+  UploadCompleteSuccess,
+  UploadCompleteUnauthorizedFileAccess,
   UploadRequest,
   UploadRequestInitialized,
   UploadRequestInvalidReason,
   UploadRequestPayloadInvalid,
   UploadRequestQuotaExceeded,
   UploadRequestRateLimited,
-} from "./api/schema";
+} from "./api/api-schema";
 import * as DateTime from "effect/DateTime";
-import UserDO from "../durable-objects/user";
-import FileDO from "../durable-objects/file";
+import UserDO from "../durable-objects/user-do";
+import FileDO from "../durable-objects/file-do";
 import { Duration, Layer, Option, Path } from "effect";
 import {
   Etag,
@@ -115,101 +118,138 @@ export default Cloudflare.Worker(
       UploadRequestApi,
       "UploadRequests",
       (handlers) =>
-        handlers.handle("initializeUpload", ({ payload, request }) =>
-          Effect.gen(function* () {
-            // Check Rate Limit
-            const { headers, cookies } = request;
-            const ip = headers["cf-connecting-ip"] ?? "unkown";
+        handlers
+          .handle("initializeUpload", ({ payload, request }) =>
+            Effect.gen(function* () {
+              // Check Rate Limit
+              const { headers, cookies } = request;
+              const ip = headers["cf-connecting-ip"] ?? "unkown";
 
-            const { success } = yield* throttle
-              .limit({ key: ip })
-              .pipe(Effect.orDie);
+              const { success } = yield* throttle
+                .limit({ key: ip })
+                .pipe(Effect.orDie);
 
-            if (!success) {
-              return yield* Effect.fail(
-                new UploadRequestRateLimited({
-                  id: errorCode.tooManyRequests,
+              if (!success) {
+                return yield* Effect.fail(
+                  new UploadRequestRateLimited({
+                    id: errorCode.tooManyRequests,
+                  }),
+                );
+              }
+
+              const now = yield* DateTime.now;
+
+              /* Validate Input */
+              const reason = invalidReason(payload, now);
+              if (Option.isSome(reason)) {
+                return yield* new UploadRequestPayloadInvalid({
+                  id: errorCode.payloadInvalid,
+                  reason: reason.value,
+                  message: `Validation failed: ${reason.value}`,
+                });
+              }
+
+              /* Identify User ID based on Cookie */
+              const userId =
+                cookies[USER_COOKIE_IDENTIFIER] || crypto.randomUUID();
+
+              yield* HttpEffect.appendPreResponseHandler((_req, response) =>
+                Effect.orDie(
+                  HttpServerResponse.setCookie(
+                    response,
+                    USER_COOKIE_IDENTIFIER,
+                    userId,
+                    {
+                      httpOnly: true,
+                      secure: true,
+                      sameSite: "lax",
+                      path: "/",
+                      maxAge: Duration.days(365),
+                    },
+                  ),
+                ),
+              );
+
+              /* Generate File ID */
+              const fileId = crypto.randomUUID();
+              const fileBlobId = crypto.randomUUID();
+
+              /* Call user operation */
+              yield* userDO
+                .getByName(userId)
+                .record(fileId, payload.fileSize)
+                .pipe(
+                  Effect.catchTag(
+                    "UploadRequestQuotaExceeded",
+                    (e) => new UploadRequestQuotaExceeded(e),
+                  ),
+                );
+
+              yield* fileDO.getByName(fileId).initialize({
+                fileId,
+                fileBlobId,
+                fileName: payload.fileName,
+                expiresAt: DateTime.formatIso(payload.expiresAt),
+                fileSize: payload.fileSize,
+                fileType: payload.fileType,
+                maxDownloadCount: payload.maxDownloadCount,
+                ownerId: userId,
+              });
+
+              // TO DO:
+              // - RETURN PRESIGNED URL
+              const presignUrlTTL = Duration.toSeconds(
+                Duration.sum(URL_TTL, LEASE_GRACE),
+              );
+              const uploadUrl = yield* presign({
+                key: fileBlobId,
+                method: "PUT",
+                expiresIn: presignUrlTTL,
+                fileSize: payload.fileSize,
+                fileType: payload.fileType,
+              });
+
+              return new UploadRequestInitialized({
+                fileId,
+                uploadUrl,
+              });
+            }),
+          )
+          .handle("completeUpload", ({ request, params }) =>
+            Effect.gen(function* () {
+              // get cookie. Make sure it matches the file DO's
+              const { cookies } = request;
+              const userId = cookies[USER_COOKIE_IDENTIFIER];
+              const existingFileDO = fileDO.getByName(params.fileId);
+              const file = yield* existingFileDO.getFile().pipe(
+                Effect.catchTags({
+                  EffectDrizzleQueryError: Effect.die,
+                  NoSuchElementError: () =>
+                    new UploadCompleteFileNotFound({
+                      id: errorCode.fileNotFound,
+                    }),
                 }),
               );
-            }
 
-            const now = yield* DateTime.now;
+              // Ensure that the requester actually is the file owner
+              if (file.ownerId !== userId) {
+                return yield* new UploadCompleteUnauthorizedFileAccess({
+                  id: errorCode.unauthorizedFileAccess,
+                });
+              }
 
-            /* Validate Input */
-            const reason = invalidReason(payload, now);
-            if (Option.isSome(reason)) {
-              return yield* new UploadRequestPayloadInvalid({
-                id: errorCode.payloadInvalid,
-                reason: reason.value,
-                message: `Validation failed: ${reason.value}`,
-              });
-            }
+              // TO DO: make this an actual link
+              const sharableLink = `https://website.com/files/${file.fileId}`;
 
-            /* Identify User ID based on Cookie */
-            const userId =
-              cookies[USER_COOKIE_IDENTIFIER] || crypto.randomUUID();
-
-            yield* HttpEffect.appendPreResponseHandler((_req, response) =>
-              Effect.orDie(
-                HttpServerResponse.setCookie(
-                  response,
-                  USER_COOKIE_IDENTIFIER,
-                  userId,
-                  {
-                    httpOnly: true,
-                    secure: true,
-                    sameSite: "lax",
-                    path: "/",
-                    maxAge: Duration.days(365),
-                  },
-                ),
-              ),
-            );
-
-            /* Generate File ID */
-            const fileId = crypto.randomUUID();
-            const fileBlobId = crypto.randomUUID();
-
-            /* Call user operation */
-            yield* userDO
-              .getByName(userId)
-              .record(fileId, payload.fileSize)
-              .pipe(
-                Effect.catchTag(
-                  "UploadRequestQuotaExceeded",
-                  (e) => new UploadRequestQuotaExceeded(e),
-                ),
-              );
-
-            yield* fileDO.getByName(fileId).initialize({
-              fileId,
-              fileBlobId,
-              fileName: payload.fileName,
-              expiresAt: DateTime.formatIso(payload.expiresAt),
-              fileSize: payload.fileSize,
-              fileType: payload.fileType,
-              maxDownloadCount: payload.maxDownloadCount,
-            });
-
-            // TO DO:
-            // - RETURN PRESIGNED URL
-            const presignUrlTTL = Duration.toSeconds(
-              Duration.sum(URL_TTL, LEASE_GRACE),
-            );
-            const uploadUrl = yield* presign({
-              key: fileBlobId,
-              method: "PUT",
-              expiresIn: presignUrlTTL,
-              fileSize: payload.fileSize,
-              fileType: payload.fileType,
-            });
-
-            return new UploadRequestInitialized({
-              fileId,
-              uploadUrl,
-            });
-          }),
-        ),
+              // resume check
+              if (file.status === "STORED" || file.status === "AVAILABLE") {
+                yield* existingFileDO.drainOutbox();
+                return new UploadCompleteSuccess({
+                  sharableLink,
+                });
+              }
+            }),
+          ),
     );
 
     return {
