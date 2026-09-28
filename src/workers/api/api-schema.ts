@@ -14,6 +14,7 @@ import {
   MAX_EXPIRY_IN_DAYS,
   USER_COOKIE_IDENTIFIER,
 } from "../../shared/constants";
+import { string } from "effect/Config";
 
 /* ----------------------  UPLOAD -------------------------------------- */
 export class UploadRequest extends Class<UploadRequest>("UploadRequest")({
@@ -66,9 +67,12 @@ export class UploadRequestQuotaExceeded extends TaggedError<UploadRequestQuotaEx
 
 export class UploadCompleteSuccess extends Class<UploadCompleteSuccess>(
   "UploadCompleteSuccess",
-)({
-  sharableLink: String,
-}) {}
+)(
+  {
+    sharableLink: String,
+  },
+  { httpApiStatus: 200 },
+) {}
 
 export class UploadCompleteUnauthorizedFileAccess extends TaggedError<UploadCompleteUnauthorizedFileAccess>()(
   "UploadCompleteUnauthorizedFileAccess",
@@ -76,6 +80,11 @@ export class UploadCompleteUnauthorizedFileAccess extends TaggedError<UploadComp
   { httpApiStatus: 401 },
 ) {}
 
+export class UploadCompleteFileNotAccessible extends TaggedError<UploadCompleteFileNotAccessible>()(
+  "UploadCompleteFileNotAccessible",
+  { id: String },
+  { httpApiStatus: 410 },
+) {}
 export class UploadCompleteFileNotFound extends TaggedError<UploadCompleteFileNotFound>()(
   "UploadCompleteFileNotFound",
   { id: String },

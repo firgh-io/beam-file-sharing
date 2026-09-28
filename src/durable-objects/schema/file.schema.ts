@@ -14,7 +14,7 @@ export const fileTable = sqliteTable("file", {
   fileBlobId: text("file_blob_id").notNull(),
   fileName: text("file_name"),
   fileType: text("file_type"),
-  fileSize: int("file_size"),
+  fileSize: int("file_size").notNull(),
   fileSha256: text("file_sha256"),
   status: text()
     .$type<

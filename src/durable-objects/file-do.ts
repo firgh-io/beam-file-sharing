@@ -20,13 +20,13 @@ import {
   URL_TTL,
 } from "../shared/constants";
 import { FilesBucket } from "../r2/files-bucket";
-import { isNone } from "effect/Option";
+import { isNone, isSome } from "effect/Option";
 import type { ReadWriteBucketClient } from "alchemy/Cloudflare/R2";
 
 type Tx = EffectSQLiteDOTransaction<typeof relations>;
 type Db = EffectSQLiteDoDatabase<typeof relations>;
 type FileRow = typeof fileTable.$inferSelect;
-type OutboxRow = typeof outboxTable.$inferSelect;
+type NewOutbox = typeof outboxTable.$inferInsert;
 type NewFile = typeof fileTable.$inferInsert;
 export type NewFileInput = Omit<
   typeof fileTable.$inferInsert,
@@ -91,7 +91,7 @@ export default class FileDO extends Cloudflare.DurableObject<FileDO>()(
                     DateTime.makeUnsafe(row.expiresAt),
                     LEASE_MARGIN,
                   );
-                  yield* owner.commitFile(
+                  yield* owner.accountFileCommit(
                     row.fileId,
                     row.bytes,
                     DateTime.formatIso(leaseUntil),
@@ -99,7 +99,7 @@ export default class FileDO extends Cloudflare.DurableObject<FileDO>()(
                   break;
                 }
                 case "RELEASE":
-                  yield* owner.releaseFile(row.fileId);
+                  yield* owner.accountFileRelease(row.fileId);
                   break;
               }
             }
@@ -133,8 +133,9 @@ export default class FileDO extends Cloudflare.DurableObject<FileDO>()(
 
           if (Result.isFailure(outcome)) {
             yield* recordFailure(row);
+            const attempts = row.attempts + 1;
 
-            if (row.attempts + 1 >= MAX_OUTBOX_DRAIN_ATTEMPT) {
+            if (attempts >= MAX_OUTBOX_DRAIN_ATTEMPT) {
               yield* Effect.logError("Outbox op parked after max attempts", {
                 outBoxId: row.outboxId,
                 fileId: row.fileId,
@@ -142,6 +143,15 @@ export default class FileDO extends Cloudflare.DurableObject<FileDO>()(
               });
               continue;
             }
+
+            yield* Effect.logWarning("Outbox op failed, retrying later", {
+              outboxId: row.outboxId,
+              fileId: row.fileId,
+              op: row.op,
+              attempts,
+              cause: outcome.failure,
+            });
+
             break;
           }
 
@@ -149,14 +159,21 @@ export default class FileDO extends Cloudflare.DurableObject<FileDO>()(
         }
       });
 
+    const toFileRecord = (file: FileRow): FileRecord => {
+      return {
+        ...file,
+        expiresAt: DateTime.makeUnsafe(file.expiresAt),
+        createdAt: DateTime.makeUnsafe(file.createdAt),
+        statusUpdatedAt: DateTime.makeUnsafe(file.statusUpdatedAt),
+        scanStatusUpdatedAt: DateTime.makeUnsafe(file.scanStatusUpdatedAt),
+      };
+    };
+
     const getFileRow = (db: Db) =>
-      Effect.map(Effect.head(db.select().from(fileTable).limit(1)), (row) => ({
-        ...row,
-        expiresAt: DateTime.makeUnsafe(row.expiresAt),
-        createdAt: DateTime.makeUnsafe(row.createdAt),
-        statusUpdatedAt: DateTime.makeUnsafe(row.statusUpdatedAt),
-        scanStatusUpdatedAt: DateTime.makeUnsafe(row.scanStatusUpdatedAt),
-      }));
+      Effect.map(
+        Effect.head(db.select().from(fileTable).limit(1)),
+        (row): FileRecord => toFileRecord(row),
+      );
 
     const retireFile = (
       db: Db,
@@ -287,6 +304,36 @@ export default class FileDO extends Cloudflare.DurableObject<FileDO>()(
         );
       });
 
+    const commitFile = (
+      db: Db,
+      fileId: string,
+      r2HeadSize: number,
+      now: DateTime.Utc,
+    ) =>
+      db.transaction((tx) =>
+        Effect.gen(function* () {
+          const currentDateTime = DateTime.formatIso(now);
+          const file = yield* tx
+            .update(fileTable)
+            .set({
+              status: "STORED",
+              scanStatus: "PENDING",
+              scanStatusUpdatedAt: currentDateTime,
+              statusUpdatedAt: currentDateTime,
+            })
+            .where(eq(fileTable.fileId, fileId))
+            .returning();
+
+          yield* tx.insert(outboxTable).values({
+            fileId: fileId,
+            op: "COMMIT",
+            bytes: r2HeadSize,
+          });
+
+          return Effect.fromNullishOr(file.at(0));
+        }),
+      );
+
     return Effect.gen(function* () {
       const dbInstance = yield* Drizzle.DurableObject({
         migrations,
@@ -344,6 +391,28 @@ export default class FileDO extends Cloudflare.DurableObject<FileDO>()(
           Effect.gen(function* () {
             return yield* drainOutbox(dbInstance, filesBucket);
           }),
+        retireFile: (status: FileStatus) =>
+          Effect.gen(function* () {
+            const fileRow = yield* getFileRow(dbInstance);
+            const now = yield* DateTime.now;
+            return yield* retireFile(dbInstance, fileRow, status, now);
+          }),
+        commitFile: (fileId: string, r2HeadSize: number) =>
+          Effect.gen(function* () {
+            const now = yield* DateTime.now;
+            const committedFile = toFileRecord(
+              yield* yield* commitFile(dbInstance, fileId, r2HeadSize, now),
+            );
+            yield* scheduleNextWakeup(dbInstance, committedFile, now);
+
+            return committedFile;
+          }).pipe(
+            Effect.provideService(Cloudflare.DurableObjectState, state),
+            Effect.catchTags({
+              SqlError: Effect.die,
+              EffectDrizzleQueryError: Effect.die,
+            }),
+          ),
       };
     });
   }).pipe(Effect.provide([Cloudflare.R2.ReadWriteBucketBinding])),

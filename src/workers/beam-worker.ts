@@ -11,7 +11,9 @@ import {
 import { HttpApiBuilder } from "effect/unstable/httpapi";
 import { UploadRequestApi } from "./api/api";
 import {
+  UploadCompleteFileNotAccessible,
   UploadCompleteFileNotFound,
+  UploadCompleteFileSizeMismatch,
   UploadCompleteSuccess,
   UploadCompleteUnauthorizedFileAccess,
   UploadRequest,
@@ -24,7 +26,7 @@ import {
 import * as DateTime from "effect/DateTime";
 import UserDO from "../durable-objects/user-do";
 import FileDO from "../durable-objects/file-do";
-import { Duration, Layer, Option, Path } from "effect";
+import { Duration, Layer, Option, Path, Schedule } from "effect";
 import {
   Etag,
   HttpEffect,
@@ -33,6 +35,8 @@ import {
   HttpRouter,
 } from "effect/unstable/http";
 import { R2Presign } from "../r2/presign";
+import { FilesBucket } from "../r2/files-bucket";
+import { ScanQueue } from "../queue/scan-queue";
 
 type Reason = typeof UploadRequestInvalidReason.Type;
 type Rule = readonly [
@@ -113,6 +117,9 @@ export default Cloudflare.Worker(
     const userDO = yield* UserDO;
     const fileDO = yield* FileDO;
     const presign = yield* R2Presign;
+    const filesBucket = yield* Cloudflare.R2.ReadBucket(FilesBucket);
+    const queueResource = yield* ScanQueue;
+    const scanQueue = yield* Cloudflare.Queues.WriteQueue(queueResource);
 
     const uploadRequestGroup = HttpApiBuilder.group(
       UploadRequestApi,
@@ -221,6 +228,7 @@ export default Cloudflare.Worker(
               const { cookies } = request;
               const userId = cookies[USER_COOKIE_IDENTIFIER];
               const existingFileDO = fileDO.getByName(params.fileId);
+              const now = yield* DateTime.now;
               const file = yield* existingFileDO.getFile().pipe(
                 Effect.catchTags({
                   EffectDrizzleQueryError: Effect.die,
@@ -241,12 +249,79 @@ export default Cloudflare.Worker(
               // TO DO: make this an actual link
               const sharableLink = `https://website.com/files/${file.fileId}`;
 
-              // resume check
-              if (file.status === "STORED" || file.status === "AVAILABLE") {
-                yield* existingFileDO.drainOutbox();
-                return new UploadCompleteSuccess({
-                  sharableLink,
-                });
+              switch (file.status) {
+                case "STORED":
+                case "AVAILABLE": {
+                  yield* existingFileDO
+                    .drainOutbox()
+                    .pipe(
+                      Effect.catchTag("EffectDrizzleQueryError", Effect.die),
+                    );
+                  return new UploadCompleteSuccess({
+                    sharableLink,
+                  });
+                }
+                case "DELETED":
+                case "EXPIRED":
+                case "QUARANTINED": {
+                  return yield* new UploadCompleteFileNotAccessible({
+                    id: errorCode.fileNotAccessible,
+                  });
+                }
+                case "AWAITING_UPLOAD": {
+                  // TO DO:
+
+                  // HEAD R2 and perform actions
+                  const fileObject = yield* filesBucket
+                    .head(file.fileBlobId)
+                    .pipe(Effect.catchTag("R2Error", Effect.die));
+
+                  if (!fileObject) {
+                    // TO DO: differentiate file not found vs file is still not showing in R2 yet (read vs write race condition issue)
+                    return yield* new UploadCompleteFileNotFound({
+                      id: errorCode.fileNotFound,
+                    });
+                  }
+
+                  // File size mismatches. What's uploaded to R2 differs to what the user claim.
+                  if (fileObject?.size !== file.fileSize) {
+                    return yield* new UploadCompleteFileSizeMismatch({
+                      id: errorCode.fileSizeMismatch,
+                    });
+                  }
+
+                  // push to outbox to commit if previous step went well
+                  const committedFile = yield* existingFileDO
+                    .commitFile(file.fileId, fileObject.size)
+                    .pipe(
+                      Effect.catchTags({
+                        NoSuchElementError: () =>
+                          new UploadCompleteFileNotFound({
+                            id: errorCode.fileNotFound,
+                          }),
+                      }),
+                    );
+
+                  // Queue file for scanning
+                  yield* scanQueue
+                    .send({
+                      fileId: file.fileId,
+                      fileBlobId: file.fileBlobId,
+                    })
+                    .pipe(
+                      Effect.retry(
+                        Schedule.exponential("100 millis").pipe(
+                          Schedule.upTo({ times: 3 }),
+                        ),
+                      ),
+                      Effect.catchTag("SendError", Effect.die),
+                    );
+
+                  // return sharable url
+                  return new UploadCompleteSuccess({
+                    sharableLink,
+                  });
+                }
               }
             }),
           ),
@@ -266,5 +341,11 @@ export default Cloudflare.Worker(
         ),
       ),
     };
-  }).pipe(Effect.provide(Cloudflare.Workers.RateLimitBinding)),
+  }).pipe(
+    Effect.provide([
+      Cloudflare.Workers.RateLimitBinding,
+      Cloudflare.R2.ReadBucketBinding,
+      Cloudflare.Queues.WriteQueueBinding,
+    ]),
+  ),
 );

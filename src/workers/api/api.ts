@@ -1,10 +1,4 @@
-import {
-  Struct,
-  decodeUnknownEffect,
-  encodeUnknownEffect,
-  String,
-  Union,
-} from "effect/Schema";
+import { decodeUnknownEffect, encodeUnknownEffect, Union } from "effect/Schema";
 import {
   UploadRequest,
   UploadRequestQuotaExceeded,
@@ -16,6 +10,7 @@ import {
   UploadCompleteFileSizeMismatch,
   UploadCompleteUnauthorizedFileAccess,
   UploadCompleteUploadNotVisible,
+  UploadCompleteFileNotAccessible,
 } from "./api-schema";
 import {
   HttpApi,
@@ -50,6 +45,7 @@ const completeUpload = HttpApiEndpoint.post(
       UploadCompleteFileSizeMismatch,
       UploadCompleteUnauthorizedFileAccess,
       UploadCompleteUploadNotVisible,
+      UploadCompleteFileNotAccessible,
     ]),
   },
 );

@@ -26,6 +26,8 @@ export const errorCode = {
   quotaExceeded: "QUOTA_EXCEEDED",
   unauthorizedFileAccess: "UNAUTHORIZED_FILE_ACCESS",
   fileNotFound: "FILE_NOT_FOUND",
+  fileNotAccessible: "FILE_NOT_ACCESSIBLE",
+  fileSizeMismatch: "FILE_SIZE_MISMATCH",
 };
 
 export const URL_TTL = Duration.minutes(15);

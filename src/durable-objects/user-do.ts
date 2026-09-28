@@ -115,7 +115,11 @@ export default class UserDO extends Cloudflare.DurableObject<UserDO>()(
                 SqlError: Effect.die,
               }),
             ),
-        commitFile: (fileId: string, fileSize: number, leaseUntil: string) =>
+        accountFileCommit: (
+          fileId: string,
+          fileSize: number,
+          leaseUntil: string,
+        ) =>
           Effect.gen(function* () {
             const now = yield* DateTime.now;
             return yield* db
@@ -139,7 +143,7 @@ export default class UserDO extends Cloudflare.DurableObject<UserDO>()(
               .returning()
               .pipe(Effect.map((rows) => rows[0]));
           }),
-        releaseFile: (fileId: string) =>
+        accountFileRelease: (fileId: string) =>
           Effect.gen(function* () {
             return yield* db
               .delete(quotaLedgerTable)
