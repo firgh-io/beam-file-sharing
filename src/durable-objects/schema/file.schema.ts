@@ -42,7 +42,7 @@ export const fileTable = sqliteTable("file", {
 
 export const outboxTable = sqliteTable("outbox", {
   id: int().primaryKey({ autoIncrement: true }),
-  op: text().$type<"COMMIT" | "RELEASE">().notNull(),
+  op: text().$type<"COMMIT" | "RELEASE" | "QUARANTINE">().notNull(),
   fileId: text("file_id")
     .references((): AnySQLiteColumn => fileTable.fileId)
     .notNull(),

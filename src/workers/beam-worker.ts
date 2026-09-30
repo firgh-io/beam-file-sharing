@@ -36,7 +36,7 @@ import {
 } from "effect/unstable/http";
 import { R2Presign } from "../r2/presign";
 import { FilesBucket } from "../r2/files-bucket";
-import { ScanQueue } from "../queue/scan-queue";
+import { ScanQueue, type QueueMessageBody } from "../queue/scan-queue";
 
 type Reason = typeof UploadRequestInvalidReason.Type;
 type Rule = readonly [
@@ -307,7 +307,8 @@ export default Cloudflare.Worker(
                     .send({
                       fileId: file.fileId,
                       fileBlobId: file.fileBlobId,
-                    })
+                      sentAt: DateTime.formatIso(now),
+                    } satisfies QueueMessageBody)
                     .pipe(
                       Effect.retry(
                         Schedule.exponential("100 millis").pipe(

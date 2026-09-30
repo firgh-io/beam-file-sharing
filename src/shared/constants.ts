@@ -32,3 +32,11 @@ export const errorCode = {
 
 export const URL_TTL = Duration.minutes(15);
 export const LEASE_GRACE = Duration.minutes(5);
+
+export const MALWARE_FLAG_RATE = 0.02;
+
+export const SCAN_DURATION_MIN = Duration.seconds(2);
+
+export const SCAN_DURATION_MAX = Duration.seconds(10);
+
+export const SCAN_FAILURE_RATE = 0.1;

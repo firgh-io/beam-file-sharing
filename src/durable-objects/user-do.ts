@@ -151,6 +151,15 @@ export default class UserDO extends Cloudflare.DurableObject<UserDO>()(
               .returning()
               .pipe(Effect.map((rows) => rows[0]));
           }),
+        updateLease: (fileId: string, leaseUntil: string) =>
+          Effect.gen(function* () {
+            return yield* db
+              .update(quotaLedgerTable)
+              .set({
+                leaseUntil,
+              })
+              .where(eq(quotaLedgerTable.fileId, fileId));
+          }),
       };
     });
   }),

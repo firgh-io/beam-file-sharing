@@ -9,7 +9,15 @@ import type {
 import migrations from "../../drizzle/file/migrations";
 import UserDO from "./user-do";
 import { asc, eq, lt } from "drizzle-orm";
-import { Array, DateTime, Duration, Option, Result, Schedule } from "effect";
+import {
+  Array,
+  Data,
+  DateTime,
+  Duration,
+  Option,
+  Result,
+  Schedule,
+} from "effect";
 import {
   FILE_DO_ALARM_ID,
   LEASE_GRACE,
@@ -20,8 +28,9 @@ import {
   URL_TTL,
 } from "../shared/constants";
 import { FilesBucket } from "../r2/files-bucket";
-import { isNone, isSome } from "effect/Option";
 import type { ReadWriteBucketClient } from "alchemy/Cloudflare/R2";
+import type { ScanVerdict } from "../workers/scan-malware";
+import type { TaggedError } from "effect/Schema";
 
 type Tx = EffectSQLiteDOTransaction<typeof relations>;
 type Db = EffectSQLiteDoDatabase<typeof relations>;
@@ -37,6 +46,7 @@ export type NewFileInput = Omit<
   | "createdAt"
 >;
 type FileStatus = NonNullable<FileRow["status"]>;
+type FileScanStatus = NonNullable<FileRow["scanStatus"]>;
 type FileRecord = Omit<
   FileRow,
   "expiresAt" | "createdAt" | "scanStatusUpdatedAt" | "statusUpdatedAt"
@@ -46,6 +56,12 @@ type FileRecord = Omit<
   scanStatusUpdatedAt: DateTime.Utc;
   statusUpdatedAt: DateTime.Utc;
 };
+
+export class ScanVerdictNotRecorded extends Data.TaggedError(
+  "ScanVerdictNotRecorded",
+)<{
+  fileId: string;
+}> {}
 
 export default class FileDO extends Cloudflare.DurableObject<FileDO>()(
   "FileDO",
@@ -67,6 +83,7 @@ export default class FileDO extends Cloudflare.DurableObject<FileDO>()(
             expiresAt: fileTable.expiresAt,
             fileBlobId: fileTable.fileBlobId,
             attempts: outboxTable.attempts,
+            statusUpdatedAt: fileTable.statusUpdatedAt,
           })
           .from(outboxTable)
           .innerJoin(fileTable, eq(outboxTable.fileId, fileTable.fileId))
@@ -101,6 +118,17 @@ export default class FileDO extends Cloudflare.DurableObject<FileDO>()(
                 case "RELEASE":
                   yield* owner.accountFileRelease(row.fileId);
                   break;
+                case "QUARANTINE": {
+                  // update file in user DO
+                  const quarantineTTL = DateTime.formatIso(
+                    DateTime.addDuration(
+                      DateTime.makeUnsafe(row.statusUpdatedAt),
+                      Duration.sum(QUARANTINE_TTL, LEASE_MARGIN),
+                    ),
+                  );
+                  yield* owner.updateLease(row.fileId, quarantineTTL);
+                  // schedule Alarm
+                }
               }
             }
 
@@ -304,6 +332,27 @@ export default class FileDO extends Cloudflare.DurableObject<FileDO>()(
         );
       });
 
+    const setFileStatus = (
+      db: Db,
+      fileId: string,
+      status: FileStatus,
+      scanStatus: FileScanStatus,
+      now: DateTime.Utc,
+    ) => {
+      const currentDateTime = DateTime.formatIso(now);
+      return db
+        .update(fileTable)
+        .set({
+          status,
+          scanStatus,
+          scanStatusUpdatedAt: currentDateTime,
+          statusUpdatedAt: currentDateTime,
+        })
+        .where(eq(fileTable.fileId, fileId))
+        .returning()
+        .pipe(Effect.flatMap((rows) => Effect.fromNullishOr(rows.at(0))));
+    };
+
     const commitFile = (
       db: Db,
       fileId: string,
@@ -312,17 +361,13 @@ export default class FileDO extends Cloudflare.DurableObject<FileDO>()(
     ) =>
       db.transaction((tx) =>
         Effect.gen(function* () {
-          const currentDateTime = DateTime.formatIso(now);
-          const file = yield* tx
-            .update(fileTable)
-            .set({
-              status: "STORED",
-              scanStatus: "PENDING",
-              scanStatusUpdatedAt: currentDateTime,
-              statusUpdatedAt: currentDateTime,
-            })
-            .where(eq(fileTable.fileId, fileId))
-            .returning();
+          const file = yield* setFileStatus(
+            tx,
+            fileId,
+            "STORED",
+            "PENDING",
+            now,
+          );
 
           yield* tx.insert(outboxTable).values({
             fileId: fileId,
@@ -330,7 +375,7 @@ export default class FileDO extends Cloudflare.DurableObject<FileDO>()(
             bytes: r2HeadSize,
           });
 
-          return Effect.fromNullishOr(file.at(0));
+          return file;
         }),
       );
 
@@ -401,7 +446,7 @@ export default class FileDO extends Cloudflare.DurableObject<FileDO>()(
           Effect.gen(function* () {
             const now = yield* DateTime.now;
             const committedFile = toFileRecord(
-              yield* yield* commitFile(dbInstance, fileId, r2HeadSize, now),
+              yield* commitFile(dbInstance, fileId, r2HeadSize, now),
             );
             yield* scheduleNextWakeup(dbInstance, committedFile, now);
 
@@ -411,6 +456,54 @@ export default class FileDO extends Cloudflare.DurableObject<FileDO>()(
             Effect.catchTags({
               SqlError: Effect.die,
               EffectDrizzleQueryError: Effect.die,
+            }),
+          ),
+        recordScanVerdict: (fileId: string, verdict: ScanVerdict) =>
+          Effect.gen(function* () {
+            const now = yield* DateTime.now;
+            let filePostOp;
+            switch (verdict) {
+              case "MALICIOUS": {
+                // set file status to malicious,
+                filePostOp = yield* dbInstance.transaction((tx) =>
+                  Effect.gen(function* () {
+                    let file = yield* setFileStatus(
+                      tx,
+                      fileId,
+                      "QUARANTINED",
+                      "MALICIOUS",
+                      now,
+                    );
+
+                    yield* tx.insert(outboxTable).values({
+                      fileId,
+                      op: "QUARANTINE",
+                      bytes: 0,
+                    });
+
+                    return file;
+                  }),
+                );
+                break;
+              }
+              case "CLEAN": {
+                filePostOp = yield* setFileStatus(
+                  dbInstance,
+                  fileId,
+                  "AVAILABLE",
+                  "CLEAN",
+                  now,
+                );
+              }
+            }
+            const fileRecord = toFileRecord(filePostOp);
+            yield* scheduleNextWakeup(dbInstance, fileRecord, now);
+          }).pipe(
+            Effect.provideService(Cloudflare.DurableObjectState, state),
+            Effect.catchTags({
+              SqlError: () => new ScanVerdictNotRecorded({ fileId }),
+              EffectDrizzleQueryError: () =>
+                new ScanVerdictNotRecorded({ fileId }),
             }),
           ),
       };

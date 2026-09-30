@@ -72,6 +72,7 @@ export default Cloudflare.Worker("Api", { main: import.meta.url },
 - **Reserved handler keys** (the platform calls you): `fetch`, `scheduled`, `queue`, `email`, `tail`, `trace`, `tailStream`, `test`.
 - **Every other key** in the returned object becomes an RPC method (name it whatever you want); other workers call it via `bindWorker`.
 - **Class form** (`class JobA extends Cloudflare.Worker<JobA, Shape>()(...)`) — use when other workers call this one via RPC: the one name works as both value and type, `Shape` declares the method signatures, and importers can tree-shake the implementation. Fetch-only workers: plain form is fine.
+- **Starting a new one:** type `cfworker` in any `.ts` file and Tab — `.vscode/alchemy.code-snippets` expands this whole skeleton, with tab stops on the logical ID, the outer half, and the binding layer.
 
 ## Capabilities vs helpers
 

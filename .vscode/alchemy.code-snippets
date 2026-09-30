@@ -1,0 +1,26 @@
+{
+  "Alchemy Worker": {
+    "scope": "typescript",
+    "prefix": "cfworker",
+    "description": "Bootstrap a placeholder Alchemy Cloudflare Worker",
+    "body": [
+      "import * as Cloudflare from \"alchemy/Cloudflare\";",
+      "import * as Effect from \"effect/Effect\";",
+      "import * as HttpServerResponse from \"effect/unstable/http/HttpServerResponse\";",
+      "",
+      "export default Cloudflare.Worker(",
+      "  \"${1:Name}\",",
+      "  { main: import.meta.url },",
+      "  Effect.gen(function* () {",
+      "    ${2}",
+      "    return {",
+      "      fetch: Effect.succeed(HttpServerResponse.text(\"ok\")),",
+      "    };",
+      "  }).pipe(",
+      "    Effect.provide([${3:Cloudflare.R2.ReadBucketBinding}]),",
+      "  ),",
+      ");",
+      ""
+    ]
+  }
+}
