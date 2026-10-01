@@ -11,6 +11,12 @@ import {
   UploadCompleteUnauthorizedFileAccess,
   UploadCompleteUploadNotVisible,
   UploadCompleteFileNotAccessible,
+  DownloadRequestLimitExceeded,
+  DownloadRequestFileExpired,
+  DownloadRequestFileNotAvailable,
+  DownloadRequestFileNotReady,
+  DownloadRequestSuccess,
+  DownloadRequestFileNotFound,
 } from "./api-schema";
 import {
   HttpApi,
@@ -50,11 +56,30 @@ const completeUpload = HttpApiEndpoint.post(
   },
 );
 
-export class UploadRequestGroup extends HttpApiGroup.make("UploadRequests").add(
+const downloadFile = HttpApiEndpoint.get(
+  "downloadFile",
+  "/v1/downloads/:fileId",
+  {
+    params: Schema.Struct({
+      fileId: Schema.String,
+    }),
+    success: DownloadRequestSuccess,
+    error: Union([
+      DownloadRequestFileNotReady,
+      DownloadRequestFileExpired,
+      DownloadRequestLimitExceeded,
+      DownloadRequestFileNotAvailable,
+      DownloadRequestFileNotFound,
+    ]),
+  },
+);
+
+export class FileRequestGroup extends HttpApiGroup.make("FileRequests").add(
   intializeUpload,
   completeUpload,
+  downloadFile,
 ) {}
 
-export class UploadRequestApi extends HttpApi.make("UploadRequestApi").add(
-  UploadRequestGroup,
+export class FileRequestApi extends HttpApi.make("FileRequestApi").add(
+  FileRequestGroup,
 ) {}

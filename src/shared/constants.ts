@@ -28,6 +28,9 @@ export const errorCode = {
   fileNotFound: "FILE_NOT_FOUND",
   fileNotAccessible: "FILE_NOT_ACCESSIBLE",
   fileSizeMismatch: "FILE_SIZE_MISMATCH",
+  fileExpired: "FILE_EXPIRED",
+  downloadLimitExceeded: "DOWNLOAD_LIMIT_EXCEEDED",
+  fileNotAvailable: "FILE_NOT_AVAILABLE",
 };
 
 export const URL_TTL = Duration.minutes(15);

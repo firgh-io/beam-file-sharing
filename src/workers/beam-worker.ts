@@ -9,8 +9,12 @@ import {
   USER_COOKIE_IDENTIFIER,
 } from "../shared/constants";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
-import { UploadRequestApi } from "./api/api";
+import { FileRequestApi } from "./api/api";
 import {
+  DownloadRequestFileExpired,
+  DownloadRequestFileNotAvailable,
+  DownloadRequestFileNotFound,
+  DownloadRequestLimitExceeded,
   UploadCompleteFileNotAccessible,
   UploadCompleteFileNotFound,
   UploadCompleteFileSizeMismatch,
@@ -26,7 +30,7 @@ import {
 import * as DateTime from "effect/DateTime";
 import UserDO from "../durable-objects/user-do";
 import FileDO from "../durable-objects/file-do";
-import { Duration, Layer, Option, Path, Schedule } from "effect";
+import { Duration, Layer, Option, Path, Record, Schedule } from "effect";
 import {
   Etag,
   HttpEffect,
@@ -121,9 +125,9 @@ export default Cloudflare.Worker(
     const queueResource = yield* ScanQueue;
     const scanQueue = yield* Cloudflare.Queues.WriteQueue(queueResource);
 
-    const uploadRequestGroup = HttpApiBuilder.group(
-      UploadRequestApi,
-      "UploadRequests",
+    const fileRequestGroup = HttpApiBuilder.group(
+      FileRequestApi,
+      "FileRequests",
       (handlers) =>
         handlers
           .handle("initializeUpload", ({ payload, request }) =>
@@ -291,7 +295,7 @@ export default Cloudflare.Worker(
                   }
 
                   // push to outbox to commit if previous step went well
-                  const committedFile = yield* existingFileDO
+                  yield* existingFileDO
                     .commitFile(file.fileId, fileObject.size)
                     .pipe(
                       Effect.catchTags({
@@ -325,13 +329,72 @@ export default Cloudflare.Worker(
                 }
               }
             }),
+          )
+          .handle("downloadFile", ({ request, params }) =>
+            Effect.gen(function* () {
+              const existingFileDO = fileDO.getByName(params.fileId);
+              const file = yield* existingFileDO.getFile().pipe(
+                Effect.catchTags({
+                  EffectDrizzleQueryError: Effect.die,
+                  NoSuchElementError: () =>
+                    new DownloadRequestFileNotFound({
+                      id: errorCode.fileNotFound,
+                    }),
+                }),
+              );
+
+              yield* existingFileDO.validateDownloadRequest(params.fileId).pipe(
+                Effect.catchTags({
+                  DownloadRequestFileExpired: (e) =>
+                    new DownloadRequestFileExpired({ id: e.id }),
+                  DownloadRequestFileNotAvailable: (e) =>
+                    new DownloadRequestFileNotAvailable({ id: e.id }),
+                  DownloadRequestLimitExceeded: (e) =>
+                    new DownloadRequestLimitExceeded({
+                      id: e.id,
+                      limit: e.limit,
+                    }),
+                  EffectDrizzleQueryError: Effect.die,
+                  NoSuchElementError: () =>
+                    new DownloadRequestFileNotFound({
+                      id: errorCode.fileNotFound,
+                    }),
+                }),
+              );
+
+              const object = yield* filesBucket
+                .get(file.fileBlobId)
+                .pipe(Effect.catchTag("R2Error", Effect.die));
+
+              if (!object) {
+                return yield* new DownloadRequestFileNotFound({
+                  id: errorCode.fileNotFound,
+                });
+              }
+
+              const downloadRequestHeader = {
+                "Content-Length": String(object.size),
+                "Content-Disposition": `attachment; filename*=UTF-8''${encodeURIComponent(file.fileName ?? "download")}`,
+              };
+
+              yield* HttpEffect.appendPreResponseHandler((_req, response) =>
+                Effect.succeed(
+                  HttpServerResponse.setHeaders(
+                    response,
+                    downloadRequestHeader,
+                  ),
+                ),
+              );
+
+              return object.body;
+            }),
           ),
     );
 
     return {
       fetch: yield* HttpRouter.toHttpEffect(
-        HttpApiBuilder.layer(UploadRequestApi).pipe(
-          Layer.provide(uploadRequestGroup),
+        HttpApiBuilder.layer(FileRequestApi).pipe(
+          Layer.provide(fileRequestGroup),
           Layer.provide([Etag.layer, HttpPlatformStub, Path.layer]),
           Layer.provide(
             HttpRouter.cors({

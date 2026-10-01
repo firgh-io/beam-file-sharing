@@ -34,7 +34,7 @@ export const fileTable = sqliteTable("file", {
     .default("NOT_SCANNED"),
   scanStatusUpdatedAt: text("scan_status_updated_at").notNull(),
   expiresAt: text("expired_at").notNull(),
-  downloadCount: int("download_count"),
+  downloadCount: int("download_count").default(0),
   maxDownloadCount: int("max_download_count"),
   webhookUrl: text("webhook_url"),
   createdAt: timestamps.createdAt,

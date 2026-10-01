@@ -15,6 +15,8 @@ import {
   USER_COOKIE_IDENTIFIER,
 } from "../../shared/constants";
 import { string } from "effect/Config";
+import { Stream } from "effect";
+import { HttpApiSchema } from "effect/unstable/httpapi";
 
 /* ----------------------  UPLOAD -------------------------------------- */
 export class UploadRequest extends Class<UploadRequest>("UploadRequest")({
@@ -101,4 +103,41 @@ export class UploadCompleteUploadNotVisible extends TaggedError<UploadCompleteUp
   "UploadCompleteUploadNotVisible",
   { id: String },
   { httpApiStatus: 409 },
+) {}
+
+/* ----------------------  Download -------------------------------------- */
+
+// TODO: Download request success returns file stream
+export const DownloadRequestSuccess = HttpApiSchema.StreamUint8Array({
+  contentType: "application/octet-stream",
+});
+
+export class DownloadRequestFileNotReady extends TaggedError<DownloadRequestFileNotReady>()(
+  "DownloadRequestFileNotReady",
+  { id: String },
+  { httpApiStatus: 403 },
+) {}
+
+export class DownloadRequestFileExpired extends TaggedError<DownloadRequestFileExpired>()(
+  "DownloadRequestFileExpired",
+  { id: String },
+  { httpApiStatus: 403 },
+) {}
+
+export class DownloadRequestLimitExceeded extends TaggedError<DownloadRequestLimitExceeded>()(
+  "DownloadRequestLimitExceeded",
+  { id: String, limit: Number },
+  { httpApiStatus: 403 },
+) {}
+
+export class DownloadRequestFileNotAvailable extends TaggedError<DownloadRequestFileNotAvailable>()(
+  "DownloadRequestFileNotAvailable",
+  { id: String },
+  { httpApiStatus: 403 },
+) {}
+
+export class DownloadRequestFileNotFound extends TaggedError<DownloadRequestFileNotFound>()(
+  "DownloadRequestFileNotFound",
+  { id: String },
+  { httpApiStatus: 404 },
 ) {}

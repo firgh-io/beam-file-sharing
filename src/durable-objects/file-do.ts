@@ -19,6 +19,7 @@ import {
   Schedule,
 } from "effect";
 import {
+  errorCode,
   FILE_DO_ALARM_ID,
   LEASE_GRACE,
   LEASE_MARGIN,
@@ -31,6 +32,11 @@ import { FilesBucket } from "../r2/files-bucket";
 import type { ReadWriteBucketClient } from "alchemy/Cloudflare/R2";
 import type { ScanVerdict } from "../workers/scan-malware";
 import type { TaggedError } from "effect/Schema";
+import {
+  DownloadRequestFileExpired,
+  DownloadRequestFileNotAvailable,
+  DownloadRequestLimitExceeded,
+} from "../workers/api/api-schema";
 
 type Tx = EffectSQLiteDOTransaction<typeof relations>;
 type Db = EffectSQLiteDoDatabase<typeof relations>;
@@ -506,6 +512,38 @@ export default class FileDO extends Cloudflare.DurableObject<FileDO>()(
                 new ScanVerdictNotRecorded({ fileId }),
             }),
           ),
+        validateDownloadRequest: (fileId: string) =>
+          Effect.gen(function* () {
+            const fileRow = yield* getFileRow(dbInstance);
+            const now = yield* DateTime.now;
+            if (
+              DateTime.isLessThan(DateTime.makeUnsafe(fileRow.expiresAt), now)
+            )
+              return yield* new DownloadRequestFileExpired({
+                id: errorCode.fileExpired,
+              });
+
+            if (
+              fileRow.maxDownloadCount &&
+              (fileRow.downloadCount ?? 0) >= fileRow.maxDownloadCount
+            )
+              return yield* new DownloadRequestLimitExceeded({
+                id: errorCode.downloadLimitExceeded,
+                limit: fileRow.maxDownloadCount,
+              });
+
+            if (fileRow.status !== "AVAILABLE")
+              return yield* new DownloadRequestFileNotAvailable({
+                id: errorCode.fileNotAvailable,
+              });
+
+            dbInstance
+              .update(fileTable)
+              .set({
+                downloadCount: (fileRow.downloadCount ?? 0) + 1,
+              })
+              .where(eq(fileTable.fileId, fileId));
+          }),
       };
     });
   }).pipe(Effect.provide([Cloudflare.R2.ReadWriteBucketBinding])),
