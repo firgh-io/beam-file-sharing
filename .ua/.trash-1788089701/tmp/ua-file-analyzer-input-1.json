@@ -1,9 +1,0 @@
-{
-  "projectRoot": "/Users/muhammadfirghili/alchemy-cloudflare",
-  "batchFiles": [
-    {"path": "alchemy.run.ts", "language": "typescript", "sizeLines": 23, "fileCategory": "code"},
-    {"path": "src/bucket.ts", "language": "typescript", "sizeLines": 3, "fileCategory": "code"},
-    {"path": "src/worker.ts", "language": "typescript", "sizeLines": 43, "fileCategory": "code"}
-  ],
-  "batchImportData": {"alchemy.run.ts": ["src/bucket.ts", "src/worker.ts"], "src/bucket.ts": [], "src/worker.ts": ["src/bucket.ts"]}
-}

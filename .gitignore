@@ -35,3 +35,9 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 
 # scratch (designs, plans)
 tmp
+
+# alchemy local state, bundles, logs and credentials
+.alchemy
+
+# understand-anything knowledge graph output
+.ua
