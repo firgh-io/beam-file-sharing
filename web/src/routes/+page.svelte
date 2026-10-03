@@ -1,1 +1,46 @@
-<div>Hello World</div>
+<script lang="ts">
+	import { m } from '#lib/messages.ts';
+	import Barcode from '#lib/components/Barcode.svelte';
+	import PageShell from '#lib/components/PageShell.svelte';
+	import Slip from '#lib/components/Slip.svelte';
+	import StepList from '#lib/components/StepList.svelte';
+	import SendIdle from '#lib/components/send/SendIdle.svelte';
+</script>
+
+<svelte:head>
+	<title>{m('send_page_title')}</title>
+</svelte:head>
+
+<PageShell tagline={m('send_tagline')} footnote={m('send_footnote')}>
+	<main
+		class="mx-auto flex w-full max-w-300 flex-1 flex-wrap items-start gap-10 px-4 pt-6 pb-14 xs:gap-14 xs:px-8 xs:pt-10 xs:pb-18"
+	>
+		<section class="min-w-0 flex-[1_1_23.75rem] animate-rise pt-3 motion-reduce:animate-none">
+			<h1 class="text-hero font-extrabold tracking-display wide">
+				{m('send_hero_line1')}
+				<span class="mt-2 block">
+					{m('send_hero_line2_prefix')}
+					<span class="bg-orange box-decoration-clone px-[0.12em]"
+						>{m('send_hero_line2_highlight')}</span
+					>
+				</span>
+			</h1>
+			<p class="mt-8 max-w-110 text-lg leading-normal text-body">{m('send_lede')}</p>
+			<StepList current={1} />
+		</section>
+
+		<section
+			class="max-w-145 min-w-0 flex-[1_1_28.75rem] animate-rise [animation-delay:80ms] motion-reduce:animate-none"
+		>
+			<Slip>
+				{#snippet label()}
+					{m('send_slip_label')} <span class="font-normal">{m('send_slip_number')}</span>
+				{/snippet}
+				{#snippet aside()}
+					<Barcode />
+				{/snippet}
+				<SendIdle />
+			</Slip>
+		</section>
+	</main>
+</PageShell>
