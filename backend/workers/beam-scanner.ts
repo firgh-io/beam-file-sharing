@@ -1,6 +1,6 @@
 import * as Cloudflare from "alchemy/Cloudflare";
 import * as Effect from "effect/Effect";
-import * as HttpServerResponse from "effect/unstable/http/HttpServerResponse";
+import * as HttpServerResponse from "effect/http/HttpServerResponse";
 import { ScanQueue } from "../queue/scan-queue";
 import type { QueueMessageBody } from "../queue/scan-queue";
 import { Stream } from "effect";

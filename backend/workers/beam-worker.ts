@@ -8,7 +8,7 @@ import {
   URL_TTL,
   USER_COOKIE_IDENTIFIER,
 } from "../shared/constants";
-import { HttpApiBuilder } from "effect/unstable/httpapi";
+import { HttpApiBuilder } from "effect/http-api";
 import { FileRequestApi } from "./api/api";
 import {
   DownloadRequestFileExpired,
@@ -37,10 +37,11 @@ import {
   HttpPlatform,
   HttpServerResponse,
   HttpRouter,
-} from "effect/unstable/http";
+} from "effect/http";
 import { R2Presign } from "../r2/presign";
 import { FilesBucket } from "../r2/files-bucket";
 import { ScanQueue, type QueueMessageBody } from "../queue/scan-queue";
+import { Website } from "../../web/website";
 
 type Reason = typeof UploadRequestInvalidReason.Type;
 type Rule = readonly [
@@ -124,6 +125,7 @@ export default Cloudflare.Worker(
     const filesBucket = yield* Cloudflare.R2.ReadBucket(FilesBucket);
     const queueResource = yield* ScanQueue;
     const scanQueue = yield* Cloudflare.Queues.WriteQueue(queueResource);
+    const website = yield* Website;
 
     const fileRequestGroup = HttpApiBuilder.group(
       FileRequestApi,
@@ -207,8 +209,6 @@ export default Cloudflare.Worker(
                 ownerId: userId,
               });
 
-              // TO DO:
-              // - RETURN PRESIGNED URL
               const presignUrlTTL = Duration.toSeconds(
                 Duration.sum(URL_TTL, LEASE_GRACE),
               );
@@ -251,7 +251,7 @@ export default Cloudflare.Worker(
               }
 
               // TO DO: make this an actual link
-              const sharableLink = `https://website.com/files/${file.fileId}`;
+              const sharableLink = `https://${website.url}/files/${file.fileId}`;
 
               switch (file.status) {
                 case "STORED":
@@ -273,8 +273,6 @@ export default Cloudflare.Worker(
                   });
                 }
                 case "AWAITING_UPLOAD": {
-                  // TO DO:
-
                   // HEAD R2 and perform actions
                   const fileObject = yield* filesBucket
                     .head(file.fileBlobId)

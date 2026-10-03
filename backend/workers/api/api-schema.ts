@@ -14,9 +14,7 @@ import {
   MAX_EXPIRY_IN_DAYS,
   USER_COOKIE_IDENTIFIER,
 } from "../../shared/constants";
-import { string } from "effect/Config";
-import { Stream } from "effect";
-import { HttpApiSchema } from "effect/unstable/httpapi";
+import { HttpApiSchema } from "effect/http-api";
 
 /* ----------------------  UPLOAD -------------------------------------- */
 export class UploadRequest extends Class<UploadRequest>("UploadRequest")({

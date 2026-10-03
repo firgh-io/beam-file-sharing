@@ -1,9 +1,9 @@
 import * as Cloudflare from "alchemy/Cloudflare";
-import * as HttpServerResponse from "effect/unstable/http/HttpServerResponse";
+import * as HttpServerResponse from "effect/http/HttpServerResponse";
 import * as Effect from "effect/Effect";
 import { Bucket } from "../r2/bucket";
 import Counter from "../durable-objects/counter";
-import * as HttpRouter from "effect/unstable/http/HttpRouter";
+import * as HttpRouter from "effect/http/HttpRouter";
 import { RuntimeContext } from "alchemy/RuntimeContext";
 import * as Stream from "effect/Stream";
 

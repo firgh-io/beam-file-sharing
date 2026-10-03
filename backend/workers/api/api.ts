@@ -22,7 +22,7 @@ import {
   HttpApi,
   HttpApiEndpoint,
   HttpApiGroup,
-} from "effect/unstable/httpapi";
+} from "effect/http-api";
 import { Schema } from "effect";
 
 export const decodeUploadRequest = decodeUnknownEffect(UploadRequest);

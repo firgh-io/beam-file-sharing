@@ -1,4 +1,4 @@
-import * as HttpClient from "effect/unstable/http/HttpClient";
+import * as HttpClient from "effect/http/HttpClient";
 import * as Test from "alchemy/Test/Bun";
 import { expect } from "bun:test";
 import * as Cloudflare from "alchemy/Cloudflare";

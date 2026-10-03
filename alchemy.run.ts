@@ -1,8 +1,8 @@
 import * as Alchemy from "alchemy";
 import * as Cloudflare from "alchemy/Cloudflare";
 import * as Effect from "effect/Effect";
-import { Bucket } from "./src/r2/bucket";
-import Worker from "./src/workers/worker";
+import { Bucket } from "./backend/r2/bucket";
+import Worker from "./backend/workers/worker";
 
 export default Alchemy.Stack(
   "NewApp",

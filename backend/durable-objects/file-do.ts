@@ -1,5 +1,6 @@
 import * as Cloudflare from "alchemy/Cloudflare";
 import * as Effect from "effect/Effect";
+import type * as Cause from "effect/Cause";
 import * as Drizzle from "alchemy/Drizzle/Cloudflare";
 import { fileTable, outboxTable, relations } from "./schema/file.schema";
 import type {
@@ -511,6 +512,9 @@ export default class FileDO extends Cloudflare.DurableObject<FileDO>()(
               EffectDrizzleQueryError: () =>
                 new ScanVerdictNotRecorded({ fileId }),
             }),
+            Effect.mapError(
+              (e): Cause.NoSuchElementError | ScanVerdictNotRecorded => e,
+            ),
           ),
         validateDownloadRequest: (fileId: string) =>
           Effect.gen(function* () {
