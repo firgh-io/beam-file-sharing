@@ -5,7 +5,36 @@
 	import Slip from '#lib/components/Slip.svelte';
 	import StepList from '#lib/components/StepList.svelte';
 	import SendIdle from '#lib/components/send/SendIdle.svelte';
+	import SendReady from '#lib/components/send/SendReady.svelte';
+	import SendUploading from '#lib/components/send/SendUploading.svelte';
+	import SendDone from '#lib/components/send/SendDone.svelte';
+	import { getFileType } from '../helper';
+
+	type Phase = 'idle' | 'ready' | 'uploading' | 'done';
+	let currentPhase = $state<Phase>('idle');
+	let storedFile = $state.raw<File | null>(null);
+	const step = $derived(currentPhase === 'idle' ? 1 : currentPhase === 'done' ? 3 : 2);
+
+	const handleFileSelect = (file: File) => {
+		console.log('file selected parent', file.name);
+		storedFile = file;
+		currentPhase = 'ready';
+	};
+
+	const handleFileRemove = () => {
+		storedFile = null;
+		currentPhase = 'idle';
+	};
 </script>
+
+<!-- TO DO: -->
+<!-- React to on upload -->
+<!-- Changes state to Ready -->
+<!-- Validate Input -->
+<!-- Create link calls Upload  -->
+<!-- Get back presigned URL -->
+<!-- Upload to R2 -->
+<!-- Call complete -->
 
 <svelte:head>
 	<title>{m('send_page_title')}</title>
@@ -26,7 +55,7 @@
 				</span>
 			</h1>
 			<p class="mt-8 max-w-110 text-lg leading-normal text-body">{m('send_lede')}</p>
-			<StepList current={1} />
+			<StepList current={step} />
 		</section>
 
 		<section
@@ -39,7 +68,26 @@
 				{#snippet aside()}
 					<Barcode />
 				{/snippet}
-				<SendIdle />
+
+				<!-- Send box -->
+				{#if currentPhase === 'idle'}
+					<SendIdle onFileSelect={handleFileSelect} onFileRemove={handleFileRemove} />
+				{:else if currentPhase === 'ready'}
+					<SendReady
+						name={storedFile?.name ?? ''}
+						size={storedFile?.size?.toString() ?? ''}
+						ext={getFileType(storedFile)}
+						onFileRemove={handleFileRemove}
+					/>
+				{:else if currentPhase === 'uploading'}
+					<SendUploading
+						name={storedFile?.name ?? ''}
+						size={storedFile?.size?.toString() ?? ''}
+						progress={5}
+					/>
+				{:else}
+					<SendDone name="" size="" link="" slug="" maxDownloads={0} expiresDate={''} />
+				{/if}
 			</Slip>
 		</section>
 	</main>

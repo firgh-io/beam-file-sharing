@@ -6,7 +6,12 @@
 	import Icon from '../Icon.svelte';
 	import TextField from '../TextField.svelte';
 
-	let { name, size, ext }: { name: string; size: string; ext: string } = $props();
+	let {
+		name,
+		size,
+		ext,
+		onFileRemove
+	}: { name: string; size: string; ext: string; onFileRemove: () => void } = $props();
 
 	const maxDownloadChips = [1, 5, 10, 25];
 </script>
@@ -15,12 +20,18 @@
 	<div class="flex items-center gap-4">
 		<ExtBadge {ext} />
 		<div class="min-w-0 flex-1">
-			<div class="text-lg leading-tight font-bold [overflow-wrap:anywhere]">{name}</div>
-			<div class="mt-1 font-mono text-meta text-subtle">{size}</div>
+			{#key name}
+				<div class="text-lg leading-tight font-bold wrap-anywhere">{name}</div>
+			{/key}
+
+			{#key size}
+				<div class="mt-1 font-mono text-meta text-subtle">{size}</div>
+			{/key}
 		</div>
 		<button
 			type="button"
 			aria-label={m('common_remove_file')}
+			onclick={onFileRemove}
 			class="flex size-11 flex-none cursor-pointer items-center justify-center rounded-base border-hard border-ink bg-transparent text-ink hover:bg-ink hover:text-paper"
 		>
 			<Icon name="close" class="size-4.5" />

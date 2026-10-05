@@ -13,7 +13,7 @@
 		</span>
 	</div>
 	<ProgressBar value={progress} label={m('send_uploading_progress_label')} />
-	<div class="text-lg leading-tight font-bold [overflow-wrap:anywhere]">
+	<div class="text-lg leading-tight font-bold wrap-anywhere">
 		{name}
 		<span class="font-mono text-meta font-normal text-subtle">{size}</span>
 	</div>
