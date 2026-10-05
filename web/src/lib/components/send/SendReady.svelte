@@ -65,7 +65,6 @@
 			<div class="flex flex-wrap gap-1.5">
 				<Chip>{m('send_chip_tomorrow')}</Chip>
 				<Chip>{m('send_chip_7_days')}</Chip>
-				<Chip>{m('send_chip_30_days')}</Chip>
 				<Chip selected>{m('send_chip_never')}</Chip>
 			</div>
 		</div>
