@@ -95,8 +95,13 @@
 		<section class="flex flex-col gap-6">
 			<h2 class="text-headline font-extrabold tracking-display wide">{m('design_send_states')}</h2>
 			<div class="grid grid-cols-[repeat(auto-fit,minmax(min(100%,25rem),1fr))] items-start gap-10">
-				{#snippet idle()}<SendIdle />{/snippet}
-				{#snippet ready()}<SendReady name={f.name} size={f.size} ext={f.ext} />{/snippet}
+				{#snippet idle()}<SendIdle onFileSelect={() => {}} onFileRemove={() => {}} />{/snippet}
+				{#snippet ready()}<SendReady
+						name={f.name}
+						size={f.size}
+						ext={f.ext}
+						onFileRemove={() => {}}
+					/>{/snippet}
 				{#snippet uploading()}<SendUploading
 						name={f.name}
 						size={f.size}

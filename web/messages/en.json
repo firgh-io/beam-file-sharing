@@ -47,6 +47,8 @@
 	"send_see_preview": "See what they see",
 	"send_another": "Send another file",
 
+	"send_error_file_size_invalid": "That file is empty or larger than {maxFileSize} MB. Choose a smaller one.",
+
 	"download_page_title": "Dispatch: download a file",
 	"download_tagline": "Someone sent you a file",
 	"download_footnote": "Only download files from people you know.",

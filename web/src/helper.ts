@@ -1,3 +1,6 @@
+import { MAX_FILE_SIZE } from '../../shared/limits';
+import type { MessageKey } from '#lib/messages.ts';
+
 const GENERIC_FILE_TYPE_KEY = 'OTH';
 
 const FILE_TYPE_MAP: Record<string, string> = {
@@ -27,4 +30,19 @@ export const getFileType = (file: File | null): string => {
 	const mimeType = file.type.split('/').at(-1);
 
 	return FILE_TYPE_MAP[mimeType ?? ''] ?? GENERIC_FILE_TYPE_KEY;
+};
+
+type FileValidation =
+	{ ok: true } | { ok: false; messageKey: MessageKey; params: Record<string, number> };
+
+export const validateFile = (file: File): FileValidation => {
+	if (file.size <= 0 || file.size > MAX_FILE_SIZE) {
+		return {
+			ok: false,
+			messageKey: 'send_error_file_size_invalid',
+			params: { maxFileSize: MAX_FILE_SIZE / 1024 / 1024 }
+		};
+	}
+
+	return { ok: true };
 };

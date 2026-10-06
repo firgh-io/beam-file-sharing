@@ -1,10 +1,9 @@
 import { Duration } from "effect";
+import { MAX_FILE_SIZE, MAX_EXPIRY_IN_DAYS } from "../../shared/limits";
+
+export { MAX_FILE_SIZE, MAX_EXPIRY_IN_DAYS };
 
 export const USER_COOKIE_IDENTIFIER = "anon_id";
-
-export const MAX_FILE_SIZE = 100 * 1024 * 1024;
-
-export const MAX_EXPIRY_IN_DAYS = 7;
 
 export const USER_QUOTA_BYTES = 1024 * 1024 * 1024;
 

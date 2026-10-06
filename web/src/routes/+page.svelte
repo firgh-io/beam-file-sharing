@@ -16,7 +16,6 @@
 	const step = $derived(currentPhase === 'idle' ? 1 : currentPhase === 'done' ? 3 : 2);
 
 	const handleFileSelect = (file: File) => {
-		console.log('file selected parent', file.name);
 		storedFile = file;
 		currentPhase = 'ready';
 	};
@@ -28,8 +27,6 @@
 </script>
 
 <!-- TO DO: -->
-<!-- React to on upload -->
-<!-- Changes state to Ready -->
 <!-- Validate Input -->
 <!-- Create link calls Upload  -->
 <!-- Get back presigned URL -->
