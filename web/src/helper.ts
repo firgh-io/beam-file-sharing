@@ -1,4 +1,4 @@
-import { MAX_FILE_SIZE } from '../../shared/limits';
+import { MAX_FILE_SIZE } from '#lib/limits.ts';
 import type { MessageKey } from '#lib/messages.ts';
 
 const GENERIC_FILE_TYPE_KEY = 'OTH';
@@ -32,10 +32,10 @@ export const getFileType = (file: File | null): string => {
 	return FILE_TYPE_MAP[mimeType ?? ''] ?? GENERIC_FILE_TYPE_KEY;
 };
 
-type FileValidation =
-	{ ok: true } | { ok: false; messageKey: MessageKey; params: Record<string, number> };
+type Validation =
+	{ ok: true } | { ok: false; messageKey: MessageKey; params?: Record<string, number> };
 
-export const validateFile = (file: File): FileValidation => {
+export const validateFile = (file: File): Validation => {
 	if (file.size <= 0 || file.size > MAX_FILE_SIZE) {
 		return {
 			ok: false,
@@ -45,4 +45,12 @@ export const validateFile = (file: File): FileValidation => {
 	}
 
 	return { ok: true };
+};
+
+export const validateMaxDownloadCount = (count: number | undefined): Validation => {
+	if (count === undefined || (Number.isInteger(count) && count >= 1)) {
+		return { ok: true };
+	}
+
+	return { ok: false, messageKey: 'send_error_max_downloads_invalid' };
 };

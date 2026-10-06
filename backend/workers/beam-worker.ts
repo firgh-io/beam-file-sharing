@@ -67,7 +67,8 @@ const isExpiryDateValid = (expiresAt: DateTime.Utc, now: DateTime.Utc) => {
 };
 
 const isMaxDownloadCountValid = (maxDownloadCount: number | undefined) =>
-  maxDownloadCount === undefined || Number(maxDownloadCount) > 0;
+  maxDownloadCount === undefined ||
+  (Number.isInteger(maxDownloadCount) && maxDownloadCount >= 1);
 
 const isSizeValid = (fileSize: number) =>
   fileSize > 0 && fileSize <= MAX_FILE_SIZE;

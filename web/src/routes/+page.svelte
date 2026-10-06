@@ -13,6 +13,7 @@
 	type Phase = 'idle' | 'ready' | 'uploading' | 'done';
 	let currentPhase = $state<Phase>('idle');
 	let storedFile = $state.raw<File | null>(null);
+	let maxDownloadCount = $state<number>();
 	const step = $derived(currentPhase === 'idle' ? 1 : currentPhase === 'done' ? 3 : 2);
 
 	const handleFileSelect = (file: File) => {
@@ -22,12 +23,12 @@
 
 	const handleFileRemove = () => {
 		storedFile = null;
+		maxDownloadCount = undefined;
 		currentPhase = 'idle';
 	};
 </script>
 
 <!-- TO DO: -->
-<!-- Validate Input -->
 <!-- Create link calls Upload  -->
 <!-- Get back presigned URL -->
 <!-- Upload to R2 -->
@@ -75,6 +76,7 @@
 						size={storedFile?.size?.toString() ?? ''}
 						ext={getFileType(storedFile)}
 						onFileRemove={handleFileRemove}
+						bind:maxDownloadCount
 					/>
 				{:else if currentPhase === 'uploading'}
 					<SendUploading

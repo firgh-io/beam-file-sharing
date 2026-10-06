@@ -1,5 +1,7 @@
 <script lang="ts">
+	import { MAX_EXPIRY_IN_DAYS } from '#lib/limits.ts';
 	import { m } from '#lib/messages.ts';
+	import { validateMaxDownloadCount } from '../../../helper';
 	import Button from '../Button.svelte';
 	import Chip from '../Chip.svelte';
 	import ExtBadge from '../ExtBadge.svelte';
@@ -10,10 +12,29 @@
 		name,
 		size,
 		ext,
+		maxDownloadCount = $bindable(),
 		onFileRemove
-	}: { name: string; size: string; ext: string; onFileRemove: () => void } = $props();
+	}: {
+		name: string;
+		size: string;
+		ext: string;
+		maxDownloadCount?: number;
+		onFileRemove: () => void;
+	} = $props();
 
 	const maxDownloadChips = [1, 5, 10, 25];
+
+	const validation = $derived(validateMaxDownloadCount(maxDownloadCount));
+	const errorMessage = $derived(validation.ok ? null : m(validation.messageKey));
+	const summary = $derived.by(() => {
+		const params = { days: MAX_EXPIRY_IN_DAYS };
+		if (maxDownloadCount === undefined || !validation.ok)
+			return m('send_summary_unlimited', params);
+		return m(maxDownloadCount === 1 ? 'send_summary_limited_one' : 'send_summary_limited_other', {
+			...params,
+			count: maxDownloadCount
+		});
+	});
 </script>
 
 <div class="flex animate-rise flex-col gap-6 p-6 motion-reduce:animate-none">
@@ -55,12 +76,36 @@
 				min="1"
 				inputmode="numeric"
 				placeholder={m('send_max_placeholder')}
+				value={maxDownloadCount ?? ''}
+				oninput={(e) => {
+					const value = e.currentTarget.valueAsNumber;
+					maxDownloadCount = Number.isNaN(value) ? undefined : value;
+				}}
+				aria-invalid={errorMessage ? 'true' : undefined}
+				aria-describedby={errorMessage ? 'max-downloads-error' : undefined}
 			/>
+			<div role="alert" class="empty:hidden">
+				{#if errorMessage}
+					<p
+						id="max-downloads-error"
+						class="border-l-hard border-orange bg-orange-tint px-3 py-2 font-mono text-meta font-medium text-ink"
+					>
+						{errorMessage}
+					</p>
+				{/if}
+			</div>
 			<div class="flex flex-wrap gap-1.5">
 				{#each maxDownloadChips as count (count)}
-					<Chip>{count}</Chip>
+					<Chip selected={maxDownloadCount === count} onclick={() => (maxDownloadCount = count)}>
+						{count}
+					</Chip>
 				{/each}
-				<Chip selected>{m('send_chip_no_limit')}</Chip>
+				<Chip
+					selected={maxDownloadCount === undefined}
+					onclick={() => (maxDownloadCount = undefined)}
+				>
+					{m('send_chip_no_limit')}
+				</Chip>
 			</div>
 		</div>
 
@@ -76,7 +121,6 @@
 			<div class="flex flex-wrap gap-1.5">
 				<Chip>{m('send_chip_tomorrow')}</Chip>
 				<Chip>{m('send_chip_7_days')}</Chip>
-				<Chip selected>{m('send_chip_never')}</Chip>
 			</div>
 		</div>
 	</div>
@@ -89,6 +133,6 @@
 				class="h-5 w-7 transition-transform duration-250 ease-dispatch group-hover:translate-y-1 motion-reduce:transition-none"
 			/>
 		</Button>
-		<p class="font-mono text-meta text-muted">{m('send_summary_unlimited')}</p>
+		<p class="font-mono text-meta text-muted">{summary}</p>
 	</div>
 </div>
