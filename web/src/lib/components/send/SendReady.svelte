@@ -1,7 +1,13 @@
 <script lang="ts">
 	import { MAX_EXPIRY_IN_DAYS } from '#lib/limits.ts';
 	import { m } from '#lib/messages.ts';
-	import { validateMaxDownloadCount } from '../../../helper';
+	import {
+		addDays,
+		formatDateInputValue,
+		toDateInputValue,
+		validateExpiresOn,
+		validateMaxDownloadCount
+	} from '../../../helper';
 	import Button from '../Button.svelte';
 	import Chip from '../Chip.svelte';
 	import ExtBadge from '../ExtBadge.svelte';
@@ -13,25 +19,46 @@
 		size,
 		ext,
 		maxDownloadCount = $bindable(),
+		expiresOn = $bindable(),
 		onFileRemove
 	}: {
 		name: string;
 		size: string;
 		ext: string;
 		maxDownloadCount?: number;
+		expiresOn?: string;
 		onFileRemove: () => void;
 	} = $props();
 
 	const maxDownloadChips = [1, 5, 10, 25];
 
-	const validation = $derived(validateMaxDownloadCount(maxDownloadCount));
-	const errorMessage = $derived(validation.ok ? null : m(validation.messageKey));
+	const expiryChips = [
+		{ label: 'send_chip_tomorrow', days: 1 },
+		{ label: 'send_chip_7_days', days: 7 }
+	] as const;
+
+	const today = new Date();
+	const minExpiresOn = toDateInputValue(today);
+	const maxExpiresOn = toDateInputValue(addDays(today, MAX_EXPIRY_IN_DAYS));
+
+	const maxDownloadsValidation = $derived(validateMaxDownloadCount(maxDownloadCount));
+	const expiresOnValidation = $derived(validateExpiresOn(expiresOn, today));
+	const errorMessage = $derived(
+		maxDownloadsValidation.ok ? null : m(maxDownloadsValidation.messageKey)
+	);
+	const expiresOnError = $derived(
+		expiresOnValidation.ok ? null : m(expiresOnValidation.messageKey, expiresOnValidation.params)
+	);
 	const summary = $derived.by(() => {
-		const params = { days: MAX_EXPIRY_IN_DAYS };
-		if (maxDownloadCount === undefined || !validation.ok)
-			return m('send_summary_unlimited', params);
+		const expiry =
+			expiresOn && expiresOnValidation.ok
+				? m('send_expiry_on', { date: formatDateInputValue(expiresOn) })
+				: m('send_expiry_default', { days: MAX_EXPIRY_IN_DAYS });
+		if (maxDownloadCount === undefined || !maxDownloadsValidation.ok) {
+			return m('send_summary_unlimited', { expiry });
+		}
 		return m(maxDownloadCount === 1 ? 'send_summary_limited_one' : 'send_summary_limited_other', {
-			...params,
+			expiry,
 			count: maxDownloadCount
 		});
 	});
@@ -117,10 +144,33 @@
 				{m('send_expires_label')}
 				<span class="font-mono text-micro font-normal text-subtle">{m('send_optional')}</span>
 			</label>
-			<TextField id="expires-on" type="date" />
+			<TextField
+				id="expires-on"
+				type="date"
+				min={minExpiresOn}
+				max={maxExpiresOn}
+				value={expiresOn ?? ''}
+				oninput={(e) => (expiresOn = e.currentTarget.value || undefined)}
+				aria-invalid={expiresOnError ? 'true' : undefined}
+				aria-describedby={expiresOnError ? 'expires-on-error' : undefined}
+			/>
+			<div role="alert" class="empty:hidden">
+				{#if expiresOnError}
+					<p
+						id="expires-on-error"
+						class="border-l-hard border-orange bg-orange-tint px-3 py-2 font-mono text-meta font-medium text-ink"
+					>
+						{expiresOnError}
+					</p>
+				{/if}
+			</div>
 			<div class="flex flex-wrap gap-1.5">
-				<Chip>{m('send_chip_tomorrow')}</Chip>
-				<Chip>{m('send_chip_7_days')}</Chip>
+				{#each expiryChips as { label, days } (days)}
+					{@const value = toDateInputValue(addDays(today, days))}
+					<Chip selected={expiresOn === value} onclick={() => (expiresOn = value)}>
+						{m(label)}
+					</Chip>
+				{/each}
 			</div>
 		</div>
 	</div>

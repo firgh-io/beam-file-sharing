@@ -8,12 +8,15 @@
 	import SendReady from '#lib/components/send/SendReady.svelte';
 	import SendUploading from '#lib/components/send/SendUploading.svelte';
 	import SendDone from '#lib/components/send/SendDone.svelte';
-	import { getFileType } from '../helper';
+	import { MAX_EXPIRY_IN_DAYS } from '#lib/limits.ts';
+	import { addDays, getFileType, toDateInputValue } from '../helper';
 
 	type Phase = 'idle' | 'ready' | 'uploading' | 'done';
 	let currentPhase = $state<Phase>('idle');
 	let storedFile = $state.raw<File | null>(null);
 	let maxDownloadCount = $state<number>();
+	const defaultExpiresOn = () => toDateInputValue(addDays(new Date(), MAX_EXPIRY_IN_DAYS));
+	let expiresOn = $state<string | undefined>(defaultExpiresOn());
 	const step = $derived(currentPhase === 'idle' ? 1 : currentPhase === 'done' ? 3 : 2);
 
 	const handleFileSelect = (file: File) => {
@@ -24,6 +27,7 @@
 	const handleFileRemove = () => {
 		storedFile = null;
 		maxDownloadCount = undefined;
+		expiresOn = defaultExpiresOn();
 		currentPhase = 'idle';
 	};
 </script>
@@ -77,6 +81,7 @@
 						ext={getFileType(storedFile)}
 						onFileRemove={handleFileRemove}
 						bind:maxDownloadCount
+						bind:expiresOn
 					/>
 				{:else if currentPhase === 'uploading'}
 					<SendUploading

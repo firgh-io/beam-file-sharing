@@ -1,4 +1,4 @@
-import { MAX_FILE_SIZE } from '#lib/limits.ts';
+import { MAX_EXPIRY_IN_DAYS, MAX_FILE_SIZE } from '#lib/limits.ts';
 import type { MessageKey } from '#lib/messages.ts';
 
 const GENERIC_FILE_TYPE_KEY = 'OTH';
@@ -53,4 +53,40 @@ export const validateMaxDownloadCount = (count: number | undefined): Validation 
 	}
 
 	return { ok: false, messageKey: 'send_error_max_downloads_invalid' };
+};
+
+export const addDays = (date: Date, days: number): Date => {
+	const result = new Date(date);
+	result.setDate(result.getDate() + days);
+	return result;
+};
+
+export const toDateInputValue = (date: Date): string => {
+	const month = String(date.getMonth() + 1).padStart(2, '0');
+	const day = String(date.getDate()).padStart(2, '0');
+	return `${date.getFullYear()}-${month}-${day}`;
+};
+
+export const formatDateInputValue = (value: string): string =>
+	new Date(`${value}T00:00:00`).toLocaleDateString(undefined, {
+		day: 'numeric',
+		month: 'short',
+		year: 'numeric'
+	});
+
+export const validateExpiresOn = (value: string | undefined, now: Date): Validation => {
+	if (!value) return { ok: true };
+
+	const earliest = toDateInputValue(now);
+	const latest = toDateInputValue(addDays(now, MAX_EXPIRY_IN_DAYS));
+
+	if (value < earliest || value > latest) {
+		return {
+			ok: false,
+			messageKey: 'send_error_expires_on_invalid',
+			params: { days: MAX_EXPIRY_IN_DAYS }
+		};
+	}
+
+	return { ok: true };
 };

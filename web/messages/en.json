@@ -30,9 +30,11 @@
 	"send_chip_tomorrow": "Tomorrow",
 	"send_chip_7_days": "7 days",
 	"send_create_link": "Create link",
-	"send_summary_unlimited": "Anyone with the link gets unlimited downloads, with the expiry date defaulting to {days} days.",
-	"send_summary_limited_one": "The link stops working after 1 download or at the expiry date, defaulting to {days} days.",
-	"send_summary_limited_other": "The link stops working after {count} downloads or at the expiry date, defaulting to {days} days.",
+	"send_summary_unlimited": "Anyone with the link gets unlimited downloads, and the link expires {expiry}.",
+	"send_summary_limited_one": "The link stops working after 1 download, or expires {expiry}, whichever comes first.",
+	"send_summary_limited_other": "The link stops working after {count} downloads, or expires {expiry}, whichever comes first.",
+	"send_expiry_default": "in {days} days",
+	"send_expiry_on": "on {date}",
 
 	"send_uploading_eyebrow": "UPLOADING",
 	"send_uploading_hint": "Keep this tab open until the link appears.",
@@ -49,6 +51,7 @@
 
 	"send_error_file_size_invalid": "That file is empty or larger than {maxFileSize} MB. Choose a smaller one.",
 
+	"send_error_expires_on_invalid": "Pick a date from today up to {days} days from now.",
 	"send_error_max_downloads_invalid": "Enter a whole number of 1 or more, or choose No limit.",
 
 	"download_page_title": "Dispatch: download a file",
