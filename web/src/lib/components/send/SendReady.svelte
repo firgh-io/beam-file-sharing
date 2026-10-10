@@ -20,14 +20,18 @@
 		ext,
 		maxDownloadCount = $bindable(),
 		expiresOn = $bindable(),
-		onFileRemove
+		errorMessage: sendError = null,
+		onFileRemove,
+		onSubmit
 	}: {
 		name: string;
 		size: string;
 		ext: string;
 		maxDownloadCount?: number;
 		expiresOn?: string;
+		errorMessage?: string | null;
 		onFileRemove: () => void;
+		onSubmit: () => void;
 	} = $props();
 
 	const maxDownloadChips = [1, 5, 10, 25];
@@ -49,6 +53,9 @@
 	const expiresOnError = $derived(
 		expiresOnValidation.ok ? null : m(expiresOnValidation.messageKey, expiresOnValidation.params)
 	);
+	const handleSubmit = () => {
+		if (maxDownloadsValidation.ok && expiresOnValidation.ok) onSubmit();
+	};
 	const summary = $derived.by(() => {
 		const expiry =
 			expiresOn && expiresOnValidation.ok
@@ -176,7 +183,16 @@
 	</div>
 
 	<div class="flex flex-col gap-3">
-		<Button>
+		<div role="alert" class="empty:hidden">
+			{#if sendError}
+				<p
+					class="border-l-hard border-orange bg-orange-tint px-3 py-2 font-mono text-meta font-medium text-ink"
+				>
+					{sendError}
+				</p>
+			{/if}
+		</div>
+		<Button onclick={handleSubmit}>
 			<span>{m('send_create_link')}</span>
 			<Icon
 				name="arrow-right"

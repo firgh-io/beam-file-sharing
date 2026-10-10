@@ -10,15 +10,29 @@
 		link,
 		slug,
 		maxDownloads,
-		expiresDate
+		expiresDate,
+		onSendAnother
 	}: {
 		name: string;
 		size: string;
 		link: string;
 		slug: string;
-		maxDownloads: number;
+		maxDownloads?: number;
 		expiresDate: string;
+		onSendAnother: () => void;
 	} = $props();
+
+	let copied = $state(false);
+
+	const copyLink = async () => {
+		try {
+			await navigator.clipboard.writeText(link);
+		} catch {
+			return;
+		}
+		copied = true;
+		setTimeout(() => (copied = false), 2000);
+	};
 </script>
 
 <div class="flex animate-rise flex-col gap-6 p-6 motion-reduce:animate-none">
@@ -37,15 +51,19 @@
 		</div>
 		<button
 			type="button"
+			onclick={copyLink}
 			class="min-h-14 flex-[1_0_auto] cursor-pointer bg-ink px-5 font-mono text-sm font-bold text-paper hover:bg-ink-hover"
 		>
-			{m('send_copy_link')}
+			{copied ? m('send_copied') : m('send_copy_link')}
 		</button>
+		<span role="status" class="sr-only">{copied ? m('send_copied') : ''}</span>
 	</div>
 
 	<StatGrid>
 		<Stat label={m('send_stat_downloads')}>
-			{#snippet value()}{m('send_stat_max', { max: maxDownloads })}{/snippet}
+			{#snippet value()}{maxDownloads === undefined
+					? m('send_stat_unlimited')
+					: m('send_stat_max', { max: maxDownloads })}{/snippet}
 		</Stat>
 		<Stat label={m('send_stat_expires')}>
 			{#snippet value()}{expiresDate}{/snippet}
@@ -58,6 +76,6 @@
 
 	<div class="flex flex-wrap gap-2.5">
 		<Button variant="ghost" href="/file/{slug}">{m('send_see_preview')}</Button>
-		<Button variant="ghost">{m('send_another')}</Button>
+		<Button variant="ghost" onclick={onSendAnother}>{m('send_another')}</Button>
 	</div>
 </div>

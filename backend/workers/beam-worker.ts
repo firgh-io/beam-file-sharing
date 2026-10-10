@@ -30,7 +30,7 @@ import {
 import * as DateTime from "effect/DateTime";
 import UserDO from "../durable-objects/user-do";
 import FileDO from "../durable-objects/file-do";
-import { Duration, Layer, Option, Path, Record, Schedule } from "effect";
+import { Duration, Layer, Option, Path, Schedule } from "effect";
 import {
   Etag,
   HttpEffect,
@@ -41,7 +41,6 @@ import {
 import { R2Presign } from "../r2/presign";
 import { FilesBucket } from "../r2/files-bucket";
 import { ScanQueue, type QueueMessageBody } from "../queue/scan-queue";
-import { Website } from "../../web/website";
 
 type Reason = typeof UploadRequestInvalidReason.Type;
 type Rule = readonly [
@@ -126,7 +125,6 @@ export default Cloudflare.Worker(
     const filesBucket = yield* Cloudflare.R2.ReadBucket(FilesBucket);
     const queueResource = yield* ScanQueue;
     const scanQueue = yield* Cloudflare.Queues.WriteQueue(queueResource);
-    const website = yield* Website;
 
     const fileRequestGroup = HttpApiBuilder.group(
       FileRequestApi,
@@ -252,7 +250,8 @@ export default Cloudflare.Worker(
               }
 
               // TO DO: make this an actual link
-              const sharableLink = `https://${website.url}/files/${file.fileId}`;
+              const origin = new URL(request.url).origin;
+              const sharableLink = `${origin}/file/${file.fileId}`;
 
               switch (file.status) {
                 case "STORED":

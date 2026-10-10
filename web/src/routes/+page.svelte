@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { m } from '#lib/messages.ts';
+	import { m, type MessageKey } from '#lib/messages.ts';
 	import Barcode from '#lib/components/Barcode.svelte';
 	import PageShell from '#lib/components/PageShell.svelte';
 	import Slip from '#lib/components/Slip.svelte';
@@ -9,18 +9,49 @@
 	import SendUploading from '#lib/components/send/SendUploading.svelte';
 	import SendDone from '#lib/components/send/SendDone.svelte';
 	import { MAX_EXPIRY_IN_DAYS } from '#lib/limits.ts';
-	import { addDays, getFileType, toDateInputValue } from '#lib/helper.ts';
+	import {
+		addDays,
+		formatDateInputValue,
+		formatFileSize,
+		getFileType,
+		toDateInputValue
+	} from '#lib/helper.ts';
+	import { sendFile, Step, type SendEvent, type SendStep } from '#lib/upload.ts';
+	import { sendErrorKey } from '#lib/send-error.ts';
 
 	type Phase = 'idle' | 'ready' | 'uploading' | 'done';
+	type SentFile = { link: string; maxDownloads?: number; expiresDate: string };
+
+	const statusKeys: Record<SendStep, MessageKey> = {
+		[Step.Hashing]: 'send_status_hashing',
+		[Step.Initializing]: 'send_status_initializing',
+		[Step.Uploading]: 'send_status_uploading',
+		[Step.Completing]: 'send_status_completing'
+	};
+
+	const defaultExpiresOn = () => toDateInputValue(addDays(new Date(), MAX_EXPIRY_IN_DAYS));
+
 	let currentPhase = $state<Phase>('idle');
 	let storedFile = $state.raw<File | null>(null);
 	let maxDownloadCount = $state<number>();
-	const defaultExpiresOn = () => toDateInputValue(addDays(new Date(), MAX_EXPIRY_IN_DAYS));
 	let expiresOn = $state<string | undefined>(defaultExpiresOn());
+	let sendEvent = $state<SendEvent>({ step: Step.Hashing });
+	let sendError = $state<string | null>(null);
+	let sent = $state<SentFile | null>(null);
+	let abortController: AbortController | null = null;
+
 	const step = $derived(currentPhase === 'idle' ? 1 : currentPhase === 'done' ? 3 : 2);
+	const fileSize = $derived(storedFile ? formatFileSize(storedFile.size) : '');
+	const status = $derived(m(statusKeys[sendEvent.step]));
+	const uploadProgress = $derived(
+		sendEvent.step === Step.Uploading && sendEvent.total
+			? Math.round(((sendEvent.loaded ?? 0) / sendEvent.total) * 100)
+			: 0
+	);
 
 	const handleFileSelect = (file: File) => {
 		storedFile = file;
+		sendError = null;
 		currentPhase = 'ready';
 	};
 
@@ -28,15 +59,50 @@
 		storedFile = null;
 		maxDownloadCount = undefined;
 		expiresOn = defaultExpiresOn();
+		sendError = null;
 		currentPhase = 'idle';
 	};
-</script>
 
-<!-- TO DO: -->
-<!-- Create link calls Upload  -->
-<!-- Get back presigned URL -->
-<!-- Upload to R2 -->
-<!-- Call complete -->
+	const handleSubmit = async () => {
+		if (!storedFile) return;
+
+		const file = storedFile;
+		const limits = { maxDownloadCount, expiresOn };
+		abortController = new AbortController();
+		sendError = null;
+		sendEvent = { step: Step.Hashing };
+		currentPhase = 'uploading';
+
+		const result = await sendFile(
+			file,
+			limits,
+			(event) => (sendEvent = event),
+			abortController.signal
+		);
+		abortController = null;
+
+		if (result.ok) {
+			sent = {
+				link: result.link,
+				maxDownloads: limits.maxDownloadCount,
+				expiresDate: limits.expiresOn
+					? formatDateInputValue(limits.expiresOn)
+					: m('send_expiry_default', { days: MAX_EXPIRY_IN_DAYS })
+			};
+			currentPhase = 'done';
+		} else {
+			if (!result.cancelled) sendError = m(sendErrorKey(result));
+			currentPhase = 'ready';
+		}
+	};
+
+	const handleCancel = () => abortController?.abort();
+
+	const handleSendAnother = () => {
+		sent = null;
+		handleFileRemove();
+	};
+</script>
 
 <svelte:head>
 	<title>{m('send_page_title')}</title>
@@ -77,20 +143,32 @@
 				{:else if currentPhase === 'ready'}
 					<SendReady
 						name={storedFile?.name ?? ''}
-						size={storedFile?.size?.toString() ?? ''}
+						size={fileSize}
 						ext={getFileType(storedFile)}
+						errorMessage={sendError}
 						onFileRemove={handleFileRemove}
+						onSubmit={handleSubmit}
 						bind:maxDownloadCount
 						bind:expiresOn
 					/>
 				{:else if currentPhase === 'uploading'}
 					<SendUploading
 						name={storedFile?.name ?? ''}
-						size={storedFile?.size?.toString() ?? ''}
-						progress={5}
+						size={fileSize}
+						progress={uploadProgress}
+						{status}
+						onCancel={handleCancel}
 					/>
-				{:else}
-					<SendDone name="" size="" link="" slug="" maxDownloads={0} expiresDate={''} />
+				{:else if sent}
+					<SendDone
+						name={storedFile?.name ?? ''}
+						size={fileSize}
+						link={sent.link}
+						slug={sent.link.split('/').at(-1) ?? ''}
+						maxDownloads={sent.maxDownloads}
+						expiresDate={sent.expiresDate}
+						onSendAnother={handleSendAnother}
+					/>
 				{/if}
 			</Slip>
 		</section>

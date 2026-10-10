@@ -101,11 +101,14 @@
 						size={f.size}
 						ext={f.ext}
 						onFileRemove={() => {}}
+						onSubmit={() => {}}
 					/>{/snippet}
 				{#snippet uploading()}<SendUploading
 						name={f.name}
 						size={f.size}
 						progress={f.progress}
+						status={m('send_status_uploading')}
+						onCancel={() => {}}
 					/>{/snippet}
 				{#snippet done()}
 					<SendDone
@@ -115,6 +118,7 @@
 						slug={f.slug}
 						maxDownloads={f.maxDownloads}
 						expiresDate={f.expiresDate}
+						onSendAnother={() => {}}
 					/>
 				{/snippet}
 				{@render sendSlip(m('design_state_idle'), idle)}

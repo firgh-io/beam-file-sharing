@@ -54,7 +54,7 @@ type StepErrors = {
 	[Step.Completing]: ApiError<CompleteError>;
 };
 
-type SendFailure = {
+export type SendFailure = {
 	[S in keyof StepErrors]: { ok: false; cancelled?: false; step: S; error: StepErrors[S] };
 }[keyof StepErrors];
 
