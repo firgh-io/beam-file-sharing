@@ -30,8 +30,10 @@ import {
   UploadRequestRateLimited,
 } from "./api/api-schema";
 import * as DateTime from "effect/DateTime";
-import UserDO from "../durable-objects/user-do";
-import FileDO from "../durable-objects/file-do";
+import { UserDO } from "../durable-objects/user-do";
+import { UserDOLive } from "../durable-objects/user-do.live";
+import { FileDO } from "../durable-objects/file-do";
+import { FileDOLive } from "../durable-objects/file-do.live";
 import { Duration, Layer, Option, Path, Schedule } from "effect";
 import {
   Etag,
@@ -44,7 +46,6 @@ import { R2Presign } from "../r2/presign";
 import { FilesBucket } from "../r2/files-bucket";
 import { logUndeclaredFailure, respondToDefect } from "./api/internal-error";
 import { ScanQueue, type QueueMessageBody } from "../queue/scan-queue";
-import { consumeScanQueue } from "./scan-consumer";
 
 type Reason = typeof UploadRequestInvalidReason.Type;
 type Rule = readonly [
@@ -115,8 +116,11 @@ const HttpPlatformStub = Layer.succeed(HttpPlatform.HttpPlatform, {
     Effect.die("HttpPlatform.fileWebResponse not supported"),
 });
 
-export default Cloudflare.Worker(
+export class Beam extends Cloudflare.Worker<Beam, {}, FileDO | UserDO>()(
   "Beam",
+) {}
+
+export default Beam.make(
   { main: import.meta.url },
   Effect.gen(function* () {
     const throttle = yield* Cloudflare.RateLimit("IPLIMIT", {
@@ -129,7 +133,6 @@ export default Cloudflare.Worker(
     const filesBucket = yield* Cloudflare.R2.ReadBucket(FilesBucket);
     const queueResource = yield* ScanQueue;
     const scanQueue = yield* Cloudflare.Queues.WriteQueue(queueResource);
-    yield* consumeScanQueue(queueResource, fileDO);
 
     const fileRequestGroup = HttpApiBuilder.group(
       FileRequestApi,
@@ -435,7 +438,7 @@ export default Cloudflare.Worker(
       Cloudflare.Workers.RateLimitBinding,
       Cloudflare.R2.ReadBucketBinding,
       Cloudflare.Queues.WriteQueueBinding,
-      Cloudflare.Queues.EventSourceLive,
+      Layer.provideMerge(FileDOLive, UserDOLive),
     ]),
   ),
 );

@@ -1,5 +1,5 @@
 import * as Cloudflare from 'alchemy/Cloudflare';
-import Beam from '../backend/workers/beam-worker';
+import { Beam } from '../backend/workers/beam-worker';
 import { Effect } from 'effect';
 
 export const Website = Cloudflare.Website.SvelteKit(
