@@ -1,6 +1,11 @@
 import { expect, test } from 'bun:test';
-import { MAX_FILE_SIZE } from '../../shared/limits';
-import { validateExpiresOn, validateFile, validateMaxDownloadCount } from './helper';
+import { MAX_FILE_SIZE } from './limits';
+import {
+	formatExpiryDate,
+	validateExpiresOn,
+	validateFile,
+	validateMaxDownloadCount
+} from './helper';
 
 const fileOfSize = (size: number) => ({ size }) as File;
 
@@ -30,4 +35,17 @@ test('expiry date must fall between today and MAX_EXPIRY_IN_DAYS from now', () =
 	expect(validateExpiresOn('2026-11-04', now).ok).toBe(true);
 	expect(validateExpiresOn('2026-10-27', now).ok).toBe(false);
 	expect(validateExpiresOn('2026-11-05', now).ok).toBe(false);
+});
+
+test('expiry is the end of the chosen local day, capped just under the backend maximum', () => {
+	const now = new Date(2026, 9, 10, 15, 0);
+	const maxAt = now.getTime() + 7 * 86_400_000;
+
+	expect(formatExpiryDate('2026-10-12', now)).toBe(
+		new Date(2026, 9, 12, 23, 59, 59, 999).toISOString()
+	);
+
+	const capped = new Date(formatExpiryDate('2026-10-17', now)).getTime();
+	expect(capped).toBeLessThan(maxAt);
+	expect(maxAt - capped).toBeLessThanOrEqual(120_000);
 });

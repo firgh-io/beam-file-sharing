@@ -9,7 +9,7 @@
 	import SendUploading from '#lib/components/send/SendUploading.svelte';
 	import SendDone from '#lib/components/send/SendDone.svelte';
 	import { MAX_EXPIRY_IN_DAYS } from '#lib/limits.ts';
-	import { addDays, getFileType, toDateInputValue } from '../helper';
+	import { addDays, getFileType, toDateInputValue } from '#lib/helper.ts';
 
 	type Phase = 'idle' | 'ready' | 'uploading' | 'done';
 	let currentPhase = $state<Phase>('idle');

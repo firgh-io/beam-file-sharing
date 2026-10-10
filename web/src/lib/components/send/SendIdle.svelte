@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { m } from '#lib/messages.ts';
-	import { validateFile } from '../../../helper';
+	import { validateFile } from '#lib/helper.ts';
 	import Icon from '../Icon.svelte';
 
 	let {

@@ -7,7 +7,7 @@
 		toDateInputValue,
 		validateExpiresOn,
 		validateMaxDownloadCount
-	} from '../../../helper';
+	} from '#lib/helper.ts';
 	import Button from '../Button.svelte';
 	import Chip from '../Chip.svelte';
 	import ExtBadge from '../ExtBadge.svelte';
