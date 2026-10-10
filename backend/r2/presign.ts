@@ -1,19 +1,7 @@
-import { Effect, Redacted } from "effect";
+import { Effect } from "effect";
 import { FilesBucket } from "./files-bucket";
 import * as Cloudflare from "alchemy/Cloudflare";
-import * as Output from "alchemy/Output";
 import { AwsClient } from "aws4fetch";
-
-const sha256Hex = (input: string) =>
-  Effect.promise(() =>
-    crypto.subtle.digest("SHA-256", new TextEncoder().encode(input)),
-  ).pipe(
-    Effect.map((digest) =>
-      Array.from(new Uint8Array(digest))
-        .map((b) => b.toString(16).padStart(2, "0"))
-        .join(""),
-    ),
-  );
 
 const EXPIRY_QUERY_PARAM_KEY = "X-Amz-Expires";
 
@@ -26,56 +14,26 @@ export interface PresignInput {
 }
 
 export const R2Presign = Effect.gen(function* () {
-  const bucket = yield* FilesBucket;
-  const { accountId: environmentAccountId } =
-    yield* yield* Cloudflare.CloudflareEnvironment;
-
-  const policies = Output.all(bucket.bucketName, bucket.jurisdiction).pipe(
-    Output.map(([bucketName, jurisdiction]) => [
-      {
-        effect: "allow" as const,
-        permissionGroups: ["Workers R2 Storage Bucket Item Write" as const],
-        resources: {
-          [`com.cloudflare.edge.r2.bucket.${environmentAccountId}_${jurisdiction}_${bucketName}`]:
-            "*",
-        },
-      },
-    ]),
-  );
-
-  const token = yield* Cloudflare.ApiToken.AccountApiToken("r2-presign", {
-    name: "r2PresignUrlToken",
-    policies,
+  const credentials = yield* Cloudflare.R2.S3Credentials(FilesBucket, {
+    access: "write",
   });
-
-  const tokenId = yield* token.tokenId;
-  const tokenValue = yield* token.value;
-  const accountId = yield* token.accountId;
-  const bucketName = yield* bucket.bucketName;
-
-  const client = yield* Effect.cached(
-    Effect.gen(function* () {
-      const accessKeyId = yield* tokenId;
-      const secretAccessKey = yield* sha256Hex(
-        Redacted.value(yield* tokenValue),
-      );
-      return new AwsClient({
-        accessKeyId,
-        secretAccessKey,
-        region: "auto",
-        service: "s3",
-      });
-    }),
-  );
 
   return (input: PresignInput) =>
     Effect.gen(function* () {
+      const { endpoint, bucketName, region, accessKeyId, secretAccessKey } =
+        yield* credentials;
+      const awsClient = new AwsClient({
+        accessKeyId,
+        secretAccessKey,
+        region,
+        service: "s3",
+      });
+
       const url = new URL(
-        `https://${yield* accountId}.r2.cloudflarestorage.com/${yield* bucketName}/${input.key}`,
+        `${endpoint}/${encodeURIComponent(bucketName)}/${input.key}`,
       );
       url.searchParams.set(EXPIRY_QUERY_PARAM_KEY, String(input.expiresIn));
 
-      const awsClient = yield* client;
       const signed = yield* Effect.promise(() =>
         awsClient.sign(url, {
           method: input.method,
