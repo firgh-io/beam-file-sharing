@@ -14,12 +14,14 @@ import {
   DownloadRequestFileExpired,
   DownloadRequestFileNotAvailable,
   DownloadRequestFileNotFound,
+  DownloadRequestFileNotReady,
   DownloadRequestLimitExceeded,
   UploadCompleteFileNotAccessible,
   UploadCompleteFileNotFound,
   UploadCompleteFileSizeMismatch,
   UploadCompleteSuccess,
   UploadCompleteUnauthorizedFileAccess,
+  UploadCompleteUploadNotVisible,
   UploadRequest,
   UploadRequestInitialized,
   UploadRequestInvalidReason,
@@ -40,7 +42,9 @@ import {
 } from "effect/http";
 import { R2Presign } from "../r2/presign";
 import { FilesBucket } from "../r2/files-bucket";
+import { logUndeclaredFailure, respondToDefect } from "./api/internal-error";
 import { ScanQueue, type QueueMessageBody } from "../queue/scan-queue";
+import { consumeScanQueue } from "./scan-consumer";
 
 type Reason = typeof UploadRequestInvalidReason.Type;
 type Rule = readonly [
@@ -125,6 +129,7 @@ export default Cloudflare.Worker(
     const filesBucket = yield* Cloudflare.R2.ReadBucket(FilesBucket);
     const queueResource = yield* ScanQueue;
     const scanQueue = yield* Cloudflare.Queues.WriteQueue(queueResource);
+    yield* consumeScanQueue(queueResource, fileDO);
 
     const fileRequestGroup = HttpApiBuilder.group(
       FileRequestApi,
@@ -223,7 +228,13 @@ export default Cloudflare.Worker(
                 fileId,
                 uploadUrl,
               });
-            }),
+            }).pipe(
+              logUndeclaredFailure("initializeUpload", [
+                UploadRequestRateLimited,
+                UploadRequestPayloadInvalid,
+                UploadRequestQuotaExceeded,
+              ]),
+            ),
           )
           .handle("completeUpload", ({ request, params }) =>
             Effect.gen(function* () {
@@ -326,7 +337,15 @@ export default Cloudflare.Worker(
                   });
                 }
               }
-            }),
+            }).pipe(
+              logUndeclaredFailure("completeUpload", [
+                UploadCompleteFileNotFound,
+                UploadCompleteFileSizeMismatch,
+                UploadCompleteUnauthorizedFileAccess,
+                UploadCompleteUploadNotVisible,
+                UploadCompleteFileNotAccessible,
+              ]),
+            ),
           )
           .handle("downloadFile", ({ request, params }) =>
             Effect.gen(function* () {
@@ -385,29 +404,38 @@ export default Cloudflare.Worker(
               );
 
               return object.body;
-            }),
+            }).pipe(
+              logUndeclaredFailure("downloadFile", [
+                DownloadRequestFileNotReady,
+                DownloadRequestFileExpired,
+                DownloadRequestLimitExceeded,
+                DownloadRequestFileNotAvailable,
+                DownloadRequestFileNotFound,
+              ]),
+            ),
           ),
     );
 
-    return {
-      fetch: yield* HttpRouter.toHttpEffect(
-        HttpApiBuilder.layer(FileRequestApi).pipe(
-          Layer.provide(fileRequestGroup),
-          Layer.provide([Etag.layer, HttpPlatformStub, Path.layer]),
-          Layer.provide(
-            HttpRouter.cors({
-              allowedOrigins: ["*"],
-              allowedMethods: ["GET", "POST", "OPTIONS"],
-            }),
-          ),
+    const handler = yield* HttpRouter.toHttpEffect(
+      HttpApiBuilder.layer(FileRequestApi).pipe(
+        Layer.provide(fileRequestGroup),
+        Layer.provide([Etag.layer, HttpPlatformStub, Path.layer]),
+        Layer.provide(
+          HttpRouter.cors({
+            allowedOrigins: ["*"],
+            allowedMethods: ["GET", "POST", "OPTIONS"],
+          }),
         ),
       ),
-    };
+    );
+
+    return { fetch: handler.pipe(Effect.catchDefect(respondToDefect)) };
   }).pipe(
     Effect.provide([
       Cloudflare.Workers.RateLimitBinding,
       Cloudflare.R2.ReadBucketBinding,
       Cloudflare.Queues.WriteQueueBinding,
+      Cloudflare.Queues.EventSourceLive,
     ]),
   ),
 );

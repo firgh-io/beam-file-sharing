@@ -1,4 +1,4 @@
-import { decodeUnknownEffect, encodeUnknownEffect, Union } from "effect/Schema";
+import { decodeUnknownEffect, encodeUnknownEffect } from "effect/Schema";
 import {
   UploadRequest,
   UploadRequestQuotaExceeded,
@@ -31,11 +31,11 @@ export const encodeUploadRequest = encodeUnknownEffect(UploadRequest);
 const intializeUpload = HttpApiEndpoint.post("initializeUpload", "/v1/upload", {
   payload: UploadRequest,
   success: UploadRequestInitialized,
-  error: Union([
+  error: [
     UploadRequestRateLimited,
     UploadRequestPayloadInvalid,
     UploadRequestQuotaExceeded,
-  ]),
+  ],
 });
 
 const completeUpload = HttpApiEndpoint.post(
@@ -46,13 +46,13 @@ const completeUpload = HttpApiEndpoint.post(
       fileId: Schema.String,
     }),
     success: UploadCompleteSuccess,
-    error: Union([
+    error: [
       UploadCompleteFileNotFound,
       UploadCompleteFileSizeMismatch,
       UploadCompleteUnauthorizedFileAccess,
       UploadCompleteUploadNotVisible,
       UploadCompleteFileNotAccessible,
-    ]),
+    ],
   },
 );
 
@@ -64,13 +64,13 @@ const downloadFile = HttpApiEndpoint.get(
       fileId: Schema.String,
     }),
     success: DownloadRequestSuccess,
-    error: Union([
+    error: [
       DownloadRequestFileNotReady,
       DownloadRequestFileExpired,
       DownloadRequestLimitExceeded,
       DownloadRequestFileNotAvailable,
       DownloadRequestFileNotFound,
-    ]),
+    ],
   },
 );
 

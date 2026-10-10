@@ -204,11 +204,11 @@ export default class FileDO extends Cloudflare.DurableObject<FileDO>()(
       };
     };
 
+    const getPlainFileRow = (db: Db) =>
+      Effect.head(db.select().from(fileTable).limit(1));
+
     const getFileRow = (db: Db) =>
-      Effect.map(
-        Effect.head(db.select().from(fileTable).limit(1)),
-        (row): FileRecord => toFileRecord(row),
-      );
+      Effect.map(getPlainFileRow(db), (row): FileRecord => toFileRecord(row));
 
     const retireFile = (
       db: Db,
@@ -437,7 +437,7 @@ export default class FileDO extends Cloudflare.DurableObject<FileDO>()(
           }),
         getFile: () =>
           Effect.gen(function* () {
-            return yield* getFileRow(dbInstance);
+            return yield* getPlainFileRow(dbInstance);
           }),
         drainOutbox: () =>
           Effect.gen(function* () {
@@ -452,12 +452,19 @@ export default class FileDO extends Cloudflare.DurableObject<FileDO>()(
         commitFile: (fileId: string, r2HeadSize: number) =>
           Effect.gen(function* () {
             const now = yield* DateTime.now;
-            const committedFile = toFileRecord(
-              yield* commitFile(dbInstance, fileId, r2HeadSize, now),
+            const committedRow = yield* commitFile(
+              dbInstance,
+              fileId,
+              r2HeadSize,
+              now,
             );
-            yield* scheduleNextWakeup(dbInstance, committedFile, now);
+            yield* scheduleNextWakeup(
+              dbInstance,
+              toFileRecord(committedRow),
+              now,
+            );
 
-            return committedFile;
+            return committedRow;
           }).pipe(
             Effect.provideService(Cloudflare.DurableObjectState, state),
             Effect.catchTags({
@@ -541,7 +548,7 @@ export default class FileDO extends Cloudflare.DurableObject<FileDO>()(
                 id: errorCode.fileNotAvailable,
               });
 
-            dbInstance
+            yield* dbInstance
               .update(fileTable)
               .set({
                 downloadCount: (fileRow.downloadCount ?? 0) + 1,
