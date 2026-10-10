@@ -1,6 +1,7 @@
 import { Effect, Redacted } from "effect";
 import { FilesBucket } from "./files-bucket";
 import * as Cloudflare from "alchemy/Cloudflare";
+import * as Output from "alchemy/Output";
 import { AwsClient } from "aws4fetch";
 
 const sha256Hex = (input: string) =>
@@ -26,16 +27,25 @@ export interface PresignInput {
 
 export const R2Presign = Effect.gen(function* () {
   const bucket = yield* FilesBucket;
+  const { accountId: environmentAccountId } =
+    yield* yield* Cloudflare.CloudflareEnvironment;
+
+  const policies = Output.all(bucket.bucketName, bucket.jurisdiction).pipe(
+    Output.map(([bucketName, jurisdiction]) => [
+      {
+        effect: "allow" as const,
+        permissionGroups: ["Workers R2 Storage Bucket Item Write" as const],
+        resources: {
+          [`com.cloudflare.edge.r2.bucket.${environmentAccountId}_${jurisdiction}_${bucketName}`]:
+            "*",
+        },
+      },
+    ]),
+  );
 
   const token = yield* Cloudflare.ApiToken.AccountApiToken("r2-presign", {
     name: "r2PresignUrlToken",
-    policies: [
-      {
-        effect: "allow",
-        permissionGroups: ["Workers R2 Storage Bucket Item Write"],
-        resources: { "com.cloudflare.edge.r2.bucket.*": "*" },
-      },
-    ],
+    policies,
   });
 
   const tokenId = yield* token.tokenId;

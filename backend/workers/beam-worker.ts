@@ -250,7 +250,7 @@ export default Cloudflare.Worker(
               }
 
               // TO DO: make this an actual link
-              const origin = new URL(request.url).origin;
+              const origin = new URL(request.originalUrl).origin;
               const sharableLink = `${origin}/file/${file.fileId}`;
 
               switch (file.status) {
