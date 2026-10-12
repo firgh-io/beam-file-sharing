@@ -100,22 +100,6 @@ export const validateExpiresOn = (value: string | undefined, now: Date): Validat
 	return { ok: true };
 };
 
-/**
- * Calculates the SHA-256 checksum of an in-memory File or Blob object.
- *
- * @param file The File or Blob object to hash
- * @returns A promise that resolves to the hex string checksum
- */
-export const calculateFileSHA256 = async (file: File | Blob): Promise<string> => {
-	const arrayBuffer = await file.arrayBuffer();
-
-	const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer);
-	const hashArray = Array.from(new Uint8Array(hashBuffer));
-	const hashHex = hashArray.map((byte) => byte.toString(16).padStart(2, '0')).join('');
-
-	return hashHex;
-};
-
 export const formatFileSize = (bytes: number): string => {
 	if (bytes < 1024) return `${bytes} B`;
 

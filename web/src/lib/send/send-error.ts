@@ -1,5 +1,5 @@
-import { Step, type SendFailure } from './upload';
-import type { MessageKey } from './messages';
+import { Step, type SendFailure } from './send-file';
+import type { MessageKey } from '../messages';
 
 export const sendErrorKey = (failure: SendFailure): MessageKey => {
 	switch (failure.step) {

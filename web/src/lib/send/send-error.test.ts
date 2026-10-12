@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test';
-import { Step } from './upload';
+import { Step } from './send-file';
 import { sendErrorKey } from './send-error';
 
 test('maps the initialize rejection reason to a specific message, anything else to a generic one', () => {

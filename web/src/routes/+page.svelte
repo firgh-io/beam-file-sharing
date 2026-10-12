@@ -16,8 +16,8 @@
 		getFileType,
 		toDateInputValue
 	} from '#lib/helper.ts';
-	import { sendFile, Step, type SendEvent, type SendStep } from '#lib/upload.ts';
-	import { sendErrorKey } from '#lib/send-error.ts';
+	import { sendFile, Step, type SendEvent, type SendStep } from '#lib/send/send-file.ts';
+	import { sendErrorKey } from '#lib/send/send-error.ts';
 
 	type Phase = 'idle' | 'ready' | 'uploading' | 'done';
 	type SentFile = { link: string; maxDownloads?: number; expiresDate: string };
