@@ -32,6 +32,17 @@ export const errorCode = {
   fileNotAvailable: "FILE_NOT_AVAILABLE",
 };
 
+export const FILE_STATUSES = [
+  "AWAITING_UPLOAD",
+  "STORED",
+  "AVAILABLE",
+  "EXPIRED",
+  "QUARANTINED",
+  "DELETED",
+] as const;
+
+export type FileStatus = (typeof FILE_STATUSES)[number];
+
 export const URL_TTL = Duration.minutes(15);
 export const LEASE_GRACE = Duration.minutes(5);
 

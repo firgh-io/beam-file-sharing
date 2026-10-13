@@ -7,6 +7,7 @@ import {
   type AnySQLiteColumn,
 } from "drizzle-orm/sqlite-core";
 import { timestamps } from "./helpers";
+import type { FileStatus } from "../../shared/constants";
 
 export const fileTable = sqliteTable("file", {
   fileId: text("file_id").primaryKey(),
@@ -16,17 +17,7 @@ export const fileTable = sqliteTable("file", {
   fileType: text("file_type"),
   fileSize: int("file_size").notNull(),
   fileSha256: text("file_sha256"),
-  status: text()
-    .$type<
-      | `AWAITING_UPLOAD`
-      | `STORED`
-      | `AVAILABLE`
-      | `EXPIRED`
-      | `QUARANTINED`
-      | `DELETED`
-    >()
-    .notNull()
-    .default("AWAITING_UPLOAD"),
+  status: text().$type<FileStatus>().notNull().default("AWAITING_UPLOAD"),
   statusUpdatedAt: text("status_updated_at").notNull(),
   scanStatus: text("scan_status")
     .$type<`NOT_SCANNED` | `PENDING` | `CLEAN` | `MALICIOUS` | `ERROR`>()
