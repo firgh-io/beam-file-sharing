@@ -13,6 +13,7 @@ import {
 import {
   MAX_EXPIRY_IN_DAYS,
   USER_COOKIE_IDENTIFIER,
+  FILE_STATUSES,
 } from "../../shared/constants";
 import { HttpApiSchema } from "effect/http-api";
 
@@ -136,6 +137,29 @@ export class DownloadRequestFileNotAvailable extends TaggedError<DownloadRequest
 
 export class DownloadRequestFileNotFound extends TaggedError<DownloadRequestFileNotFound>()(
   "DownloadRequestFileNotFound",
+  { id: String },
+  { httpApiStatus: 404 },
+) {}
+
+/* ---------------------- Get File Metadata -------------------------------- */
+
+export class GetFileRequestSuccess extends Class<GetFileRequestSuccess>(
+  "GetFileRequestSuccess",
+)(
+  {
+    fileName: String,
+    fileSize: Number,
+    fileType: String,
+    expiresAt: String,
+    maxDownloadCount: optional(Number),
+    downloadsLeft: optional(Number),
+    status: Literals(FILE_STATUSES),
+  },
+  { httpApiStatus: 200 },
+) {}
+
+export class GetFileRequestFileNotFound extends TaggedError<GetFileRequestFileNotFound>()(
+  "GetFileRequestFileNotFound",
   { id: String },
   { httpApiStatus: 404 },
 ) {}

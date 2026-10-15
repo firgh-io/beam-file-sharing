@@ -17,12 +17,10 @@ import {
   DownloadRequestFileNotReady,
   DownloadRequestSuccess,
   DownloadRequestFileNotFound,
+  GetFileRequestSuccess,
+  GetFileRequestFileNotFound,
 } from "./api-schema";
-import {
-  HttpApi,
-  HttpApiEndpoint,
-  HttpApiGroup,
-} from "effect/http-api";
+import { HttpApi, HttpApiEndpoint, HttpApiGroup } from "effect/http-api";
 import { Schema } from "effect";
 
 export const decodeUploadRequest = decodeUnknownEffect(UploadRequest);
@@ -74,10 +72,19 @@ const downloadFile = HttpApiEndpoint.get(
   },
 );
 
+const getFile = HttpApiEndpoint.get("getFile", "/v1/file/:fileId", {
+  params: Schema.Struct({
+    fileId: Schema.String,
+  }),
+  success: GetFileRequestSuccess,
+  error: [GetFileRequestFileNotFound],
+});
+
 export class FileRequestGroup extends HttpApiGroup.make("FileRequests").add(
   intializeUpload,
   completeUpload,
   downloadFile,
+  getFile,
 ) {}
 
 export class FileRequestApi extends HttpApi.make("FileRequestApi").add(

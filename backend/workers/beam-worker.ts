@@ -16,6 +16,8 @@ import {
   DownloadRequestFileNotFound,
   DownloadRequestFileNotReady,
   DownloadRequestLimitExceeded,
+  GetFileRequestFileNotFound,
+  GetFileRequestSuccess,
   UploadCompleteFileNotAccessible,
   UploadCompleteFileNotFound,
   UploadCompleteFileSizeMismatch,
@@ -415,6 +417,38 @@ export default Beam.make(
                 DownloadRequestFileNotAvailable,
                 DownloadRequestFileNotFound,
               ]),
+            ),
+          )
+          .handle("getFile", ({ params }) =>
+            Effect.gen(function* () {
+              const existingFileDO = fileDO.getByName(params.fileId);
+              const file = yield* existingFileDO.getFile().pipe(
+                Effect.catchTags({
+                  EffectDrizzleQueryError: Effect.die,
+                  NoSuchElementError: () =>
+                    new GetFileRequestFileNotFound({
+                      id: errorCode.fileNotFound,
+                    }),
+                }),
+              );
+
+              return new GetFileRequestSuccess({
+                fileName: file.fileName ?? "download",
+                fileSize: file.fileSize,
+                fileType: file.fileType ?? "application/octet-stream",
+                expiresAt: file.expiresAt,
+                maxDownloadCount: file.maxDownloadCount ?? undefined,
+                downloadsLeft:
+                  file.maxDownloadCount === null
+                    ? undefined
+                    : Math.max(
+                        file.maxDownloadCount - (file.downloadCount ?? 0),
+                        0,
+                      ),
+                status: file.status,
+              });
+            }).pipe(
+              logUndeclaredFailure("getFile", [GetFileRequestFileNotFound]),
             ),
           ),
     );
