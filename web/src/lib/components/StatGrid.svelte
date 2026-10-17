@@ -5,7 +5,7 @@
 </script>
 
 <div
-	class="grid grid-cols-2 rounded-base border-hard border-ink bg-white *:min-w-0 [&>*+*]:border-l-hard [&>*+*]:border-ink"
+	class="grid grid-cols-2 rounded-base border-hard border-ink bg-white *:min-w-0 *:only:col-span-2 [&>*+*]:border-l-hard [&>*+*]:border-ink"
 >
 	{@render children()}
 </div>

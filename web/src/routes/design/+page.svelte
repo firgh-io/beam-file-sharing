@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { m } from '#lib/messages.ts';
 	import { sampleFile } from '#lib/sample.ts';
+	import { addDays } from '#lib/helper.ts';
 	import Barcode from '#lib/components/Barcode.svelte';
 	import Button from '#lib/components/Button.svelte';
 	import PageShell from '#lib/components/PageShell.svelte';
@@ -37,8 +38,7 @@
 		link: f.link,
 		maxDownloads: f.maxDownloads,
 		downloadsLeft: f.downloadsLeft,
-		expiresInDays: f.expiresInDays,
-		expiresDate: f.expiresDate
+		expiresDate: addDays(new Date(), f.expiresInDays)
 	};
 </script>
 
@@ -136,6 +136,10 @@
 				<div class="flex flex-col gap-3">
 					{@render stateTitle(m('design_state_live'))}
 					<DownloadTicket {...ticket} />
+				</div>
+				<div class="flex flex-col gap-3">
+					{@render stateTitle(m('design_state_unlimited'))}
+					<DownloadTicket {...ticket} maxDownloads={undefined} downloadsLeft={undefined} />
 				</div>
 				<div class="flex flex-col gap-3">
 					{@render stateTitle(m('design_state_downloading'))}

@@ -9,9 +9,11 @@ import type {
 	UploadCompleteFileNotFound,
 	UploadCompleteFileSizeMismatch,
 	UploadCompleteUnauthorizedFileAccess,
-	UploadCompleteUploadNotVisible
+	UploadCompleteUploadNotVisible,
+	GetFileRequestSuccess,
+	GetFileRequestFileNotFound
 } from '../../../../backend/workers/api/api-schema';
-import { post } from './http';
+import { post, get } from './http';
 
 export type UploadBody = typeof UploadRequest.Encoded;
 export type UploadOk = typeof UploadRequestInitialized.Encoded;
@@ -28,6 +30,9 @@ export type CompleteError =
 	| typeof UploadCompleteUnauthorizedFileAccess.Encoded
 	| typeof UploadCompleteUploadNotVisible.Encoded;
 
+export type GetFileOk = typeof GetFileRequestSuccess.Encoded;
+export type GetFileError = typeof GetFileRequestFileNotFound.Encoded;
+
 export const initializeUpload = (body: UploadBody, signal?: AbortSignal) =>
 	post<UploadOk, UploadError>('/v1/upload', { body, signal });
 
@@ -36,3 +41,6 @@ export const completeUpload = (fileId: string, signal?: AbortSignal) =>
 
 // The response is the file stream, so callers navigate to this URL instead of fetching it.
 export const downloadUrl = (fileId: string) => `/v1/downloads/${fileId}`;
+
+export const getFile = (fileId: string, fetch: typeof globalThis.fetch) =>
+	get<GetFileOk, GetFileError>(`/v1/file/${fileId}`, { fetch });

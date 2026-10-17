@@ -24,13 +24,11 @@ const FILE_TYPE_MAP: Record<string, string> = {
 	'vnd.openxmlformats-officedocument.presentationml.presentation': 'pptx'
 };
 
-export const getFileType = (file: File | null): string => {
-	if (!file) return '';
+export const getFileTypeFromMime = (mimeType: string): string =>
+	FILE_TYPE_MAP[mimeType.split('/').at(-1) ?? ''] ?? GENERIC_FILE_TYPE_KEY;
 
-	const mimeType = file.type.split('/').at(-1);
-
-	return FILE_TYPE_MAP[mimeType ?? ''] ?? GENERIC_FILE_TYPE_KEY;
-};
+export const getFileType = (file: File | null): string =>
+	file ? getFileTypeFromMime(file.type) : '';
 
 type Validation =
 	{ ok: true } | { ok: false; messageKey: MessageKey; params?: Record<string, number> };
@@ -67,12 +65,21 @@ export const toDateInputValue = (date: Date): string => {
 	return `${date.getFullYear()}-${month}-${day}`;
 };
 
-export const formatDateInputValue = (value: string): string =>
-	new Date(`${value}T00:00:00`).toLocaleDateString(undefined, {
+export const formatDate = (date: Date): string =>
+	date.toLocaleDateString(undefined, {
 		day: 'numeric',
 		month: 'short',
 		year: 'numeric'
 	});
+
+export const formatDateInputValue = (value: string): string =>
+	formatDate(new Date(`${value}T00:00:00`));
+
+const localDayNumber = (date: Date): number =>
+	Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) / 86_400_000;
+
+export const daysUntil = (date: Date, now = new Date()): number =>
+	Math.max(0, localDayNumber(date) - localDayNumber(now));
 
 // The backend rejects anything past its own now + MAX_EXPIRY_IN_DAYS; the margin absorbs latency and clock skew
 const EXPIRY_MARGIN_MS = 60_000;

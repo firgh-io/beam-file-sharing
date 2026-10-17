@@ -102,6 +102,8 @@
 		sent = null;
 		handleFileRemove();
 	};
+
+	$inspect(storedFile).with(console.log);
 </script>
 
 <svelte:head>

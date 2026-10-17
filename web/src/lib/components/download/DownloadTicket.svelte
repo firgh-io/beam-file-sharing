@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { m } from '#lib/messages.ts';
+	import { daysUntil, formatDate } from '#lib/helper.ts';
 	import Button from '../Button.svelte';
 	import ExtBadge from '../ExtBadge.svelte';
 	import Icon from '../Icon.svelte';
@@ -19,7 +20,6 @@
 		link,
 		maxDownloads,
 		downloadsLeft,
-		expiresInDays,
 		expiresDate,
 		progress = 0
 	}: {
@@ -29,12 +29,12 @@
 		ext: string;
 		kind: string;
 		link: string;
-		maxDownloads: number;
-		downloadsLeft: number;
-		expiresInDays: number;
-		expiresDate: string;
+		maxDownloads?: number;
+		downloadsLeft?: number;
+		expiresDate: Date;
 		progress?: number;
 	} = $props();
+	let daysUntilExpiry = $derived(daysUntil(expiresDate));
 </script>
 
 <Slip class="animate-rise motion-reduce:animate-none">
@@ -59,18 +59,24 @@
 		</div>
 
 		<StatGrid>
-			<Stat label={m('download_left_label')} size="lg">
-				{#snippet value()}
-					{downloadsLeft}
-					<small class="text-base font-semibold text-muted">
-						{m('download_left_of', { total: maxDownloads })}
-					</small>
-				{/snippet}
-				<Segments total={maxDownloads} remaining={downloadsLeft} />
-			</Stat>
+			{#if maxDownloads !== undefined && downloadsLeft !== undefined}
+				<Stat label={m('download_left_label')} size="lg">
+					{#snippet value()}
+						{downloadsLeft}
+						<small class="text-base font-semibold text-muted">
+							{m('download_left_of', { total: maxDownloads })}
+						</small>
+					{/snippet}
+					<Segments total={maxDownloads} remaining={downloadsLeft} />
+				</Stat>
+			{/if}
 			<Stat label={m('download_expires_label')} size="lg">
-				{#snippet value()}{m('download_expires_in_days', { days: expiresInDays })}{/snippet}
-				<div class="font-mono text-meta text-muted">{expiresDate}</div>
+				{#snippet value()}{daysUntilExpiry <= 1
+						? m('donwload_expires_tomorrow')
+						: m('download_expires_in_days', {
+								days: daysUntilExpiry
+							})}{/snippet}
+				<div class="font-mono text-meta text-muted">{formatDate(expiresDate)}</div>
 			</Stat>
 		</StatGrid>
 

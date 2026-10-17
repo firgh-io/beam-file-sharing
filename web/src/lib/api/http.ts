@@ -28,3 +28,25 @@ export const post = async <Ok, Err>(
 		return { ok: false, error: signal?.aborted ? { kind: 'aborted' } : { kind: 'network' } };
 	}
 };
+
+export const get = async <Ok, Err>(
+	path: string,
+	{ signal, fetch = globalThis.fetch }: { signal?: AbortSignal; fetch?: typeof globalThis.fetch } = {}
+): Promise<ApiResult<Ok, Err>> => {
+	try {
+		const res = await fetch(path, { signal });
+
+		if (res.ok) return { ok: true, data: await res.json() };
+
+		return {
+			ok: false,
+			error: {
+				kind: 'rejected',
+				status: res.status,
+				body: await res.json().catch(() => undefined)
+			}
+		};
+	} catch (error) {
+		return { ok: false, error: signal?.aborted ? { kind: 'aborted' } : { kind: 'network' } };
+	}
+};
