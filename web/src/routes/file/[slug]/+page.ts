@@ -1,8 +1,10 @@
 import { error } from '@sveltejs/kit';
 import type { PageLoad } from './$types';
 import { getFile } from '#lib/api/beam.ts';
+import { DEPENDENCY } from '#lib/dependencies.ts';
 
-export const load = (async ({ params, fetch }) => {
+export const load = (async ({ params, fetch, depends }) => {
+	depends(DEPENDENCY.file);
 	const fileRes = await getFile(params.slug, fetch);
 
 	if (!fileRes.ok) {

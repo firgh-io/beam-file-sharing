@@ -104,7 +104,9 @@
 							<div class="mt-0.5 text-sm text-on-ink-muted">{m('download_done_sub')}</div>
 						</div>
 					</div>
-					<Button {href} download variant="ghost-on-ink">{m('download_again')}</Button>
+					{#if downloadsLeft !== 0}
+						<Button {href} download variant="ghost-on-ink">{m('download_again')}</Button>
+					{/if}
 				</div>
 			{/if}
 		</div>
