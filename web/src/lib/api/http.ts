@@ -31,7 +31,10 @@ export const post = async <Ok, Err>(
 
 export const get = async <Ok, Err>(
 	path: string,
-	{ signal, fetch = globalThis.fetch }: { signal?: AbortSignal; fetch?: typeof globalThis.fetch } = {}
+	{
+		signal,
+		fetch = globalThis.fetch
+	}: { signal?: AbortSignal; fetch?: typeof globalThis.fetch } = {}
 ): Promise<ApiResult<Ok, Err>> => {
 	try {
 		const res = await fetch(path, { signal });
