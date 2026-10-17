@@ -52,9 +52,10 @@
 		<button
 			type="button"
 			onclick={copyLink}
-			class="min-h-14 flex-[1_0_auto] cursor-pointer bg-ink px-5 font-mono text-sm font-bold text-paper hover:bg-ink-hover"
+			class="grid min-h-14 flex-[1_0_auto] cursor-pointer place-items-center bg-ink px-5 font-mono text-sm font-bold text-paper hover:bg-ink-hover"
 		>
-			{copied ? m('send_copied') : m('send_copy_link')}
+			<span class="col-start-1 row-start-1 {copied ? 'invisible' : ''}">{m('send_copy_link')}</span>
+			<span class="col-start-1 row-start-1 {copied ? '' : 'invisible'}">{m('send_copied')}</span>
 		</button>
 		<span role="status" class="sr-only">{copied ? m('send_copied') : ''}</span>
 	</div>
