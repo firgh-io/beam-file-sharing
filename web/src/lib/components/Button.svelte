@@ -6,12 +6,14 @@
 	let {
 		variant = 'cta',
 		href,
+		download,
 		class: className = '',
 		children,
 		onclick
 	}: {
 		variant?: Variant;
 		href?: string;
+		download?: boolean;
 		class?: string;
 		children: Snippet;
 		onclick?: () => void;
@@ -33,6 +35,7 @@
 <svelte:element
 	this={href ? 'a' : 'button'}
 	{href}
+	download={href && download ? '' : undefined}
 	type={href ? undefined : 'button'}
 	class="{variants[variant]} {className}"
 	{onclick}

@@ -38,6 +38,7 @@
 		link: f.link,
 		maxDownloads: f.maxDownloads,
 		downloadsLeft: f.downloadsLeft,
+		href: '#',
 		expiresDate: addDays(new Date(), f.expiresInDays)
 	};
 </script>
@@ -140,10 +141,6 @@
 				<div class="flex flex-col gap-3">
 					{@render stateTitle(m('design_state_unlimited'))}
 					<DownloadTicket {...ticket} maxDownloads={undefined} downloadsLeft={undefined} />
-				</div>
-				<div class="flex flex-col gap-3">
-					{@render stateTitle(m('design_state_downloading'))}
-					<DownloadTicket {...ticket} phase="downloading" progress={f.progress} />
 				</div>
 				<div class="flex flex-col gap-3">
 					{@render stateTitle(m('design_state_downloaded'))}

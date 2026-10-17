@@ -17,6 +17,7 @@ export const load = (async ({ params, fetch }) => {
 
 	// The wire format encodes absent optionals as null even though the schema types them as undefined
 	return {
+		fileId: params.slug,
 		file: {
 			...file,
 			maxDownloadCount: file.maxDownloadCount ?? undefined,

@@ -5,12 +5,14 @@
 	import type { PageProps } from './$types';
 	import { sampleFile } from '#lib/sample.ts';
 	import { formatFileSize, getFileTypeFromMime } from '#lib/helper.ts';
+	import { downloadUrl } from '#lib/api/beam.ts';
 
 	let { data }: PageProps = $props();
 	let {
 		file: { fileName, fileSize, fileType, maxDownloadCount, expiresAt, downloadsLeft }
 	} = $derived(data);
 	let formattedExpiresAt = $derived(new Date(expiresAt));
+	let phase = $state<'idle' | 'done'>('idle');
 </script>
 
 <svelte:head>
@@ -23,11 +25,13 @@
 			name={fileName}
 			size={formatFileSize(fileSize)}
 			ext={getFileTypeFromMime(fileType)}
-			kind={sampleFile.kind}
 			link={sampleFile.link}
 			maxDownloads={maxDownloadCount}
 			{downloadsLeft}
 			expiresDate={formattedExpiresAt}
+			{phase}
+			href={downloadUrl(data.fileId)}
+			onDownload={() => (phase = 'done')}
 		/>
 		<p
 			class="mt-7 max-w-full animate-rise px-1 font-mono text-xs leading-relaxed text-muted [animation-delay:80ms] motion-reduce:animate-none"

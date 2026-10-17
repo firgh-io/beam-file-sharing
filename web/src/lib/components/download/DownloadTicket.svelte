@@ -4,7 +4,6 @@
 	import Button from '../Button.svelte';
 	import ExtBadge from '../ExtBadge.svelte';
 	import Icon from '../Icon.svelte';
-	import ProgressBar from '../ProgressBar.svelte';
 	import Segments from '../Segments.svelte';
 	import Slip from '../Slip.svelte';
 	import Barcode from '../Barcode.svelte';
@@ -16,23 +15,25 @@
 		name,
 		size,
 		ext,
-		kind,
+		kind = '',
 		link,
 		maxDownloads,
 		downloadsLeft,
 		expiresDate,
-		progress = 0
+		href,
+		onDownload
 	}: {
-		phase?: 'idle' | 'downloading' | 'done';
+		phase?: 'idle' | 'done';
 		name: string;
 		size: string;
 		ext: string;
-		kind: string;
+		kind?: string;
 		link: string;
 		maxDownloads?: number;
 		downloadsLeft?: number;
 		expiresDate: Date;
-		progress?: number;
+		href: string;
+		onDownload?: () => void;
 	} = $props();
 	let daysUntilExpiry = $derived(daysUntil(expiresDate));
 </script>
@@ -82,7 +83,7 @@
 
 		<div aria-live="polite">
 			{#if phase === 'idle'}
-				<Button variant="cta-lg">
+				<Button variant="cta-lg" {href} download onclick={onDownload}>
 					<span>{m('download_cta')}</span>
 					<span class="flex items-center gap-3.5">
 						<span class="font-mono text-sm font-medium tracking-normal">{size}</span>
@@ -92,22 +93,6 @@
 						/>
 					</span>
 				</Button>
-			{:else if phase === 'downloading'}
-				<div class="flex flex-col gap-2.5">
-					<div class="flex items-baseline justify-between">
-						<span class="font-mono text-xs font-bold tracking-label">
-							{m('download_downloading_eyebrow')}
-						</span>
-						<span class="text-3xl font-extrabold tracking-display wide tabular-nums">
-							{m('common_percent', { value: progress })}
-						</span>
-					</div>
-					<ProgressBar
-						size="lg"
-						value={progress}
-						label={m('download_downloading_progress_label')}
-					/>
-				</div>
 			{:else}
 				<div
 					class="flex animate-rise flex-wrap items-center justify-between gap-4 rounded-base border-hard border-ink bg-ink px-5 py-4.5 text-paper motion-reduce:animate-none"
@@ -119,7 +104,7 @@
 							<div class="mt-0.5 text-sm text-on-ink-muted">{m('download_done_sub')}</div>
 						</div>
 					</div>
-					<Button variant="ghost-on-ink">{m('download_again')}</Button>
+					<Button {href} download variant="ghost-on-ink">{m('download_again')}</Button>
 				</div>
 			{/if}
 		</div>

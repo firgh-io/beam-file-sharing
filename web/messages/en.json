@@ -79,8 +79,6 @@
 	"download_expires_in_days": "in {days} days",
 	"donwload_expires_tomorrow": "Tomorrow",
 	"download_cta": "Download file",
-	"download_downloading_eyebrow": "DOWNLOADING",
-	"download_downloading_progress_label": "Download progress",
 	"download_done_title": "Downloaded.",
 	"download_done_sub": "Check your downloads folder.",
 	"download_again": "Download again",
@@ -108,7 +106,6 @@
 	"design_state_done": "Done",
 	"design_state_live": "Live",
 	"design_state_unlimited": "Live, no download limit",
-	"design_state_downloading": "Downloading",
 	"design_state_downloaded": "Downloaded",
 	"design_state_expired": "Expired",
 	"design_state_limit": "Used up"
