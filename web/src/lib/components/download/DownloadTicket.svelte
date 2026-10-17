@@ -105,7 +105,9 @@
 						</div>
 					</div>
 					{#if downloadsLeft !== 0}
-						<Button {href} download variant="ghost-on-ink">{m('download_again')}</Button>
+						<Button {href} download variant="ghost-on-ink" onclick={onDownload}>
+							{m('download_again')}
+						</Button>
 					{/if}
 				</div>
 			{/if}
