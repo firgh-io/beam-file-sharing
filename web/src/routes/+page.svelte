@@ -29,6 +29,9 @@
 		[Step.Completing]: 'send_status_completing'
 	};
 
+	// Lets the progress bar finish animating to 100% before the done view replaces it
+	const PROGRESS_SETTLE_MS = 500;
+
 	const defaultExpiresOn = () => toDateInputValue(addDays(new Date(), MAX_EXPIRY_IN_DAYS));
 
 	let currentPhase = $state<Phase>('idle');
@@ -43,11 +46,11 @@
 	const step = $derived(currentPhase === 'idle' ? 1 : currentPhase === 'done' ? 3 : 2);
 	const fileSize = $derived(storedFile ? formatFileSize(storedFile.size) : '');
 	const status = $derived(m(statusKeys[sendEvent.step]));
-	const uploadProgress = $derived(
-		sendEvent.step === Step.Uploading && sendEvent.total
-			? Math.round(((sendEvent.loaded ?? 0) / sendEvent.total) * 100)
-			: 0
-	);
+	const uploadProgress = $derived.by(() => {
+		if (sendEvent.step === Step.Completing) return 100;
+		if (sendEvent.step !== Step.Uploading || !sendEvent.total) return 0;
+		return Math.round(((sendEvent.loaded ?? 0) / sendEvent.total) * 100);
+	});
 
 	const handleFileSelect = (file: File) => {
 		storedFile = file;
@@ -82,6 +85,7 @@
 		abortController = null;
 
 		if (result.ok) {
+			await new Promise((resolve) => setTimeout(resolve, PROGRESS_SETTLE_MS));
 			sent = {
 				link: result.link,
 				maxDownloads: limits.maxDownloadCount,
