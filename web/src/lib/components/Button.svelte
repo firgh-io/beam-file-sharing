@@ -20,7 +20,7 @@
 	} = $props();
 
 	const cta =
-		'group flex w-full cursor-pointer items-center justify-between gap-4 rounded-base border-hard border-ink bg-orange font-display font-extrabold text-ink wide transition-[transform,box-shadow] duration-100 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-btn-hover active:translate-x-1 active:translate-y-1 active:shadow-none motion-reduce:transition-none';
+		'group flex w-full cursor-pointer items-center justify-between gap-4 rounded-base border-hard border-ink bg-orange font-display font-extrabold text-ink wide transition-[transform,box-shadow] duration-250 ease-dispatch hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-btn-hover active:translate-x-1 active:translate-y-1 active:shadow-none motion-reduce:transition-none';
 	const ghost =
 		'inline-flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-base border-hard bg-transparent px-4.5 font-display text-[0.9375rem] font-bold no-underline';
 
